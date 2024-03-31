@@ -11,3 +11,4 @@ build/
 */venv
 
 *.h5
+config_generators/__pycache__/
