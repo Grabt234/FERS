@@ -9,3 +9,5 @@ tutorials/*.fersxml
 
 build/
 */venv
+
+*.h5
