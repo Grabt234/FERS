@@ -72,7 +72,84 @@ class SimulationControl:
         
         self.pulses.append(pulse)
 
-    # Add similar methods for waveform, timing, antenna, platform, and include elements
+
+    # Add similar methods for waveform, timing, antenna, weight, and include elements
+    def define_timing_source(self, name, sync_on_pulse, alpha, weight,frequency, freq_offset, std_dev_freq_offset, phase_offset, std_dev_phase_offset):
+        """Define Timing source
+
+        Args:
+            name (string): name of the clock source
+            sync_on_pulse (string): set to "true" or "false" ( Reset timing error at the start of each pulse)
+            alpha (string): Alpha parameters for 1/f^alpha clock model, set to "undefined" if unused
+            weight (string)://!< Weights for 1/f^alpha clock model, set to "undefined" if unused
+            frequency (string): The nominal oscillator frequency
+            freq_offset (string): frequency offset of clock, , set to "undefined" if unused
+            std_dev_freq_offset (string): stdev of phase offset, if freq_offset defined, this shall not be written
+            phase_offet (string): Phase offset of clock
+            std_dev_phase_offset (string): stdev of phase offset, if phase _offset defined, this shall not be written
+            
+        """
+        timing = ET.SubElement(self.simulation, 'timing', name=name, sync_on_pulse=sync_on_pulse)
+        
+        ET.SubElement(timing, 'frequency').text = str(frequency)
+
+        if (alpha != "undefined" and weight != "undefined"):
+            ET.SubElement(timing, 'noise_entry',alpha=alpha, weight=weight)
+
+        
+        ET.SubElement(timing, 'freq_offset').text = str(freq_offset)
+
+        if (freq_offset != "undefined"):
+            ET.SubElement(timing, 'random_freq_offset').text = str(std_dev_freq_offset)
+
+        ET.SubElement(timing, 'phase_offset').text = str(phase_offset)
+        
+        if (phase_offset != "undefined"):
+            ET.SubElement(timing, 'random_phase_offset').text = str(std_dev_phase_offset)
+        
+        self.pulses.append(timing)
+
+# <!-- Antenna -->
+# <!ELEMENT antenna (alpha?,beta?,gamma?,diameter?,azscale?,elscale?)>
+# <!ATTLIST antenna name CDATA #REQUIRED
+# pattern CDATA #REQUIRED>
+# <!ELEMENT alpha (#PCDATA)> <!-- Parameters of antenna model (see doc/equations.tex) -->
+# <!ELEMENT beta (#PCDATA)>
+# <!ELEMENT gamma (#PCDATA)>
+# <!ELEMENT diameter (#PCDATA)>
+# <!ELEMENT azscale (#PCDATA)> <!-- Azimuth scale for Gaussian pattern -->
+# <!ELEMENT elscale (#PCDATA)> <!-- Elevation scale for Gaussian pattern -->
+# <!ELEMENT efficiency (#PCDATA)> <!-- The antenna efficiency factor (will be < 1 in all real-world cases) -->
+
+    # <antenna name="tx_rx_antenna" pattern="isotropic">
+    #     <efficiency>1</efficiency>
+    # </antenna>
+
+    def define_isotropic_antenna(self, name, efficiency):
+        """Define antenna
+
+        Args:
+            name (string): name of the antenna
+            efficiency (string): efficiency of antenna (0-1)
+        """
+        
+        antenna = ET.SubElement(self.simulation, 'isotropic', name=name)
+        ET.SubElement(antenna, 'efficiency').text = str(efficiency)
+
+
+    def define_parabolic_antenna(self, name, efficiency, diameter):
+        """Define antenna
+
+        Args:
+            name (string): name of the antenna
+            efficiency (string): efficiency of antenna
+            diameter (string): diameter of antenna ine meters
+        """
+
+        antenna = ET.SubElement(self.simulation, 'parabolic', name=name)
+        ET.SubElement(antenna, 'efficiency').text = str(efficiency)
+        ET.SubElement(antenna, 'diameter').text = str(diameter)
+
 
     def set_export_options(self, xml="true", csv="true", binary="false", csvbinary="false"):
         export = ET.SubElement(self.parameters, 'export', xml=xml, csv=csv, binary=binary, csvbinary=csvbinary)
@@ -82,4 +159,4 @@ class SimulationControl:
 
     def write_to_file(self, file_path):
         tree = ET.ElementTree(self.simulation)
-        tree.write(file_path, encoding='unicode', xml_declaration=True)
+        tree.write(file_path, xml_declaration=True)
