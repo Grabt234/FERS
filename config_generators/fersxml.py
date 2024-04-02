@@ -109,21 +109,6 @@ class SimulationControl:
         
         self.pulses.append(timing)
 
-# <!-- Antenna -->
-# <!ELEMENT antenna (alpha?,beta?,gamma?,diameter?,azscale?,elscale?)>
-# <!ATTLIST antenna name CDATA #REQUIRED
-# pattern CDATA #REQUIRED>
-# <!ELEMENT alpha (#PCDATA)> <!-- Parameters of antenna model (see doc/equations.tex) -->
-# <!ELEMENT beta (#PCDATA)>
-# <!ELEMENT gamma (#PCDATA)>
-# <!ELEMENT diameter (#PCDATA)>
-# <!ELEMENT azscale (#PCDATA)> <!-- Azimuth scale for Gaussian pattern -->
-# <!ELEMENT elscale (#PCDATA)> <!-- Elevation scale for Gaussian pattern -->
-# <!ELEMENT efficiency (#PCDATA)> <!-- The antenna efficiency factor (will be < 1 in all real-world cases) -->
-
-    # <antenna name="tx_rx_antenna" pattern="isotropic">
-    #     <efficiency>1</efficiency>
-    # </antenna>
 
     def define_isotropic_antenna(self, name, efficiency):
         """Define antenna
@@ -149,6 +134,39 @@ class SimulationControl:
         antenna = ET.SubElement(self.simulation, 'parabolic', name=name)
         ET.SubElement(antenna, 'efficiency').text = str(efficiency)
         ET.SubElement(antenna, 'diameter').text = str(diameter)
+    
+    def define_isotropic_target(self, name, rcs):
+        """Define an isotropic radiator
+
+        Args:
+            name (string): name of target
+            rcs (string): rcs of target
+        """
+
+        target = ET.SubElement(self.simulation, "target", name=name)
+        ET.SubElement(target, "rcs", type="isotropic")
+        ET.SubElement(target, "value").text = str(rcs)
+
+    def define_receiver(self, name, antenna, timing, nodirect, nopropagationloss, window_skip, window_length, prf, noise_temp):
+        """Define a reciever with specified clock and antenna
+
+        Args:
+            name (string): name of the receiver
+            antenna (string): name of timing source as previously defined
+            timing (string): name of timing source as previously defined
+            nodirect (string): "true" or "false" if direct path signal is ignored
+            nopropagationloss (string): "true" or "false" causes propagation loss to be ignored
+            window_skip (string): Time to skip after start of pulse before starting receiving (seconds)
+            window_length (string): Length of the range gate (seconds)
+            prf (string): 1/window_length
+            noise_temp (string): Noise temperature of the receiver
+        """
+
+        receiver = ET.SubElement(self.simulation, "receiver", name=name, antenna=antenna, timing=timing, nodirect=nodirect, nopropagationloss=nopropagationloss)
+        ET.SubElement(receiver, 'window_skip').text = str(window_skip)
+        ET.SubElement(receiver, 'window_length').text = str(window_length)
+        ET.SubElement(receiver, 'prf').text = str(prf)
+        ET.SubElement(receiver, 'noise_temp').text = str(noise_temp)
 
 
     def set_export_options(self, xml="true", csv="true", binary="false", csvbinary="false"):
