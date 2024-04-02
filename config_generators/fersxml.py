@@ -15,8 +15,9 @@ class SimulationControl:
         self.antennas = []
         self.platforms = []
         self.includes = []
+        self.dtd = ""
 
-    def set_simulaion_parameters(self, start_time, end_time, propogation_speed, interprate, sample_rate, random_seed, adc_bits):
+    def set_simulaion_parameters(self, start_time, end_time, propogation_speed, interprate, sample_rate, adc_bits):
         """ Set the simulation parameters of the scenario
 
         Args:
@@ -25,7 +26,6 @@ class SimulationControl:
             propogation_speed (string): Start time of simulation
             interprate (string):  Position interpolation rate for CW
             sample_rate (string): Override the rendering sample rate with the specified one (Hz)
-            random_seed (string): Random seed for noise and jitter (positive integer). If this is not specified, time() is used
             adc_seed (string): Formats to export
         """
 
@@ -43,9 +43,6 @@ class SimulationControl:
 
         param = ET.SubElement(self.parameters, 'rate')
         param.text = str(sample_rate)
-
-        param = ET.SubElement(self.parameters, 'randomseed')
-        param.text = str(random_seed)
 
         param = ET.SubElement(self.parameters, 'adc_bits')
         param.text = str(adc_bits)
@@ -89,7 +86,7 @@ class SimulationControl:
             std_dev_phase_offset (string): stdev of phase offset, if phase _offset defined, this shall not be written
             
         """
-        timing = ET.SubElement(self.simulation, 'timing', name=name, sync_on_pulse=sync_on_pulse)
+        timing = ET.SubElement(self.simulation, 'timing', name=name, synconpulse=sync_on_pulse)
         
         ET.SubElement(timing, 'frequency').text = str(frequency)
 
@@ -118,8 +115,8 @@ class SimulationControl:
             efficiency (string): efficiency of antenna (0-1)
         """
         
-        antenna = ET.SubElement(self.simulation, 'isotropic', name=name)
-        ET.SubElement(antenna, 'efficiency').text = str(efficiency)
+        ant = ET.SubElement(self.simulation, "antenna", pattern='isotropic', name=name)
+        ET.SubElement(ant, 'efficiency').text = str(efficiency)
 
 
     def define_parabolic_antenna(self, name, efficiency, diameter):
@@ -131,9 +128,9 @@ class SimulationControl:
             diameter (string): diameter of antenna ine meters
         """
 
-        antenna = ET.SubElement(self.simulation, 'parabolic', name=name)
-        ET.SubElement(antenna, 'efficiency').text = str(efficiency)
-        ET.SubElement(antenna, 'diameter').text = str(diameter)
+        ant = ET.SubElement(self.simulation, "antenna", pattern='parabolic', name=name)
+        ET.SubElement(ant, 'efficiency').text = str(efficiency)
+        ET.SubElement(ant, 'diameter').text = str(diameter)
     
     def define_isotropic_target(self, name, rcs):
         """Define an isotropic radiator
@@ -170,11 +167,18 @@ class SimulationControl:
 
 
     def set_export_options(self, xml="true", csv="true", binary="false", csvbinary="false"):
-        export = ET.SubElement(self.parameters, 'export',encoding='utf-8', xml=xml, csv=csv, binary=binary, csvbinary=csvbinary)
+        export = ET.SubElement(self.parameters, 'export', xml=xml, csv=csv, binary=binary, csvbinary=csvbinary)
 
     def to_xml_string(self):
         return ET.tostring(self.simulation, encoding='utf-8')
+    
+    def define_dtd_file(self, name):
+        self.dtd = doctype_declaration = "<!DOCTYPE simulation SYSTEM \""+name+"\" >"
 
     def write_to_file(self, file_path):
-        tree = ET.ElementTree(self.simulation)
-        tree.write(file_path, encoding="utf-8", xml_declaration=True)
+        # Write the XML tree to a file with the DOCTYPE declaration
+        with open(file_path, "wb") as f:
+            f.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n".encode('utf-8'))
+            f.write(self.dtd.encode('utf-8'))
+            tree = ET.ElementTree(self.simulation)
+            tree.write(f)

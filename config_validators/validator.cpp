@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
         parser.setErrorHandler(&errorHandler);
 
         // Establish a DOMDocument object and parse the input FERSXML file:
-        std::cout << "Attempting to parse" + strFilePath << std::endl;
+        std::cout << "Attempting to parse: " + strFilePath << std::endl;
         parser.parse(strFilePath.c_str());
         if (parser.getErrorCount() == 0)
             std::cout << "Wohoo! Success!" + strFilePath << std::endl;
