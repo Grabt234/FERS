@@ -47,7 +47,7 @@ class SimulationControl:
         param = ET.SubElement(self.parameters, 'randomseed')
         param.text = str(random_seed)
 
-        param = ET.SubElement(self.parameters, 'adcbits')
+        param = ET.SubElement(self.parameters, 'adc_bits')
         param.text = str(adc_bits)
 
 
@@ -170,11 +170,11 @@ class SimulationControl:
 
 
     def set_export_options(self, xml="true", csv="true", binary="false", csvbinary="false"):
-        export = ET.SubElement(self.parameters, 'export', xml=xml, csv=csv, binary=binary, csvbinary=csvbinary)
+        export = ET.SubElement(self.parameters, 'export',encoding='utf-8', xml=xml, csv=csv, binary=binary, csvbinary=csvbinary)
 
     def to_xml_string(self):
-        return ET.tostring(self.simulation, encoding='unicode')
+        return ET.tostring(self.simulation, encoding='utf-8')
 
     def write_to_file(self, file_path):
         tree = ET.ElementTree(self.simulation)
-        tree.write(file_path, xml_declaration=True)
+        tree.write(file_path, encoding="utf-8", xml_declaration=True)
