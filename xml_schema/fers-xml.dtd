@@ -16,7 +16,7 @@
 <!ATTLIST export csv (true|false) "true"> 
 <!ATTLIST export binary (true|false) "false">
 <!ATTLIST export csvbinary (true|false) "false">
-<!ELEMENT adcbits #PCDATA>
+<!ELEMENT adcbits (#PCDATA)>
 
 <!-- Pulsed Radar Pulse -->
 <!ELEMENT pulse (length?,rate?,power,carrier)>
@@ -118,4 +118,3 @@ timing CDATA #REQUIRED>
 
 <!-- Include another XML file -->
 <!ELEMENT include (#PCDATA)>
-
