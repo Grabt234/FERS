@@ -21,5 +21,6 @@ Unlike FERS above, this uses cmake to simplify building
 
 ## Usage
 
-1. run `validator <file.fersxml>'
-2. follow prompts
+1. Copy all the files of interest (dtd, xsd, xml) into directory 
+2. run `validator <file.fersxml>'
+3. follow prompts
