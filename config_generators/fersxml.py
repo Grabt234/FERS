@@ -89,27 +89,25 @@ class SimulationControl:
         timing = ET.SubElement(self.simulation, 'timing', name=name, synconpulse=sync_on_pulse)
         
         ET.SubElement(timing, 'frequency').text = str(frequency)
-
-        if (alpha != "undefined" and weight != "undefined"):
-            noise = ET.SubElement(timing, 'noise_entry',alpha=alpha, weight=weight)
-            ET.SubElement(noise, 'alpha').text = str(alpha)
-            ET.SubElement(noise, 'weight').text =  str(weight)
-
-        
+       
         ET.SubElement(timing, 'freq_offset').text = str(freq_offset)
+        ET.SubElement(timing, 'phase_offset').text = str(phase_offset)
 
         if (freq_offset != "undefined"):
             ET.SubElement(timing, 'random_freq_offset').text = str(std_dev_freq_offset)
         else:
             ET.SubElement(timing, 'random_freq_offset').text = str(0)
-
-        ET.SubElement(timing, 'phase_offset').text = str(phase_offset)
         
         if (phase_offset != "undefined"):
             ET.SubElement(timing, 'random_phase_offset').text = str(std_dev_phase_offset)
         else:
             ET.SubElement(timing, 'random_phase_offset').text = str(0)
         
+        if (alpha != "undefined" and weight != "undefined"):
+            noise = ET.SubElement(timing, 'noise_entry')
+            ET.SubElement(noise, 'alpha1').text = str(alpha)
+            ET.SubElement(noise, 'weight').text =  str(weight)
+
         self.pulses.append(timing)
 
 
@@ -135,10 +133,10 @@ class SimulationControl:
         """
 
         ant = ET.SubElement(self.simulation, "antenna", pattern='parabolic', name=name)
-        ET.SubElement(ant, 'efficiency').text = str(efficiency)
         ET.SubElement(ant, 'diameter').text = str(diameter)
+        ET.SubElement(ant, 'efficiency').text = str(efficiency)
     
-    def define_isotropic_target_platform(self, platform_name, target_name, rcs):
+    def define_static_isotropic_target_platform(self, platform_name, target_name, rcs, x, y, z, boresight_azimuth, boresight_elevation):
         """Define an isotropic radiator
 
         Args:
@@ -147,11 +145,25 @@ class SimulationControl:
         """
 
         platform = ET.SubElement(self.simulation, "platform", name=platform_name)
+        
+        motion_path = ET.SubElement(platform, "motionpath",interpolation="linear")
+        position_waypoint = ET.SubElement(motion_path, "positionwaypoint")
+        ET.SubElement(position_waypoint, 'x').text = str(x)
+        ET.SubElement(position_waypoint, 'y').text = str(y)
+        ET.SubElement(position_waypoint, 'altitude').text = str(z)
+        ET.SubElement(position_waypoint, 'time').text = str(0.000001)
+
+        fixedrotation = ET.SubElement(platform, "fixedrotation")
+        ET.SubElement(fixedrotation, 'startazimuth').text = str(boresight_azimuth)
+        ET.SubElement(fixedrotation, 'startelevation').text = str(boresight_elevation)
+        ET.SubElement(fixedrotation, 'azimuthrate').text = str(0)
+        ET.SubElement(fixedrotation, 'elevationrate').text = str(0)
+
         target = ET.SubElement(platform, "target", name=target_name)
         rcs_element = ET.SubElement(target, "rcs", type="isotropic")
         ET.SubElement(rcs_element, "value").text = str(rcs)
 
-    def define_receiver_platform(self, platform_name, receiver_name, antenna, timing, nodirect, nopropagationloss, window_skip, window_length, prf, noise_temp):
+    def define_static_receiver_platform(self, platform_name, receiver_name, antenna, timing, nodirect, nopropagationloss, window_skip, window_length, prf, noise_temp, x, y, z, boresight_azimuth, boresight_elevation):
         """Define a reciever with specified clock and antenna
 
         Args:
@@ -167,6 +179,20 @@ class SimulationControl:
         """
 
         platform = ET.SubElement(self.simulation, "platform", name=platform_name)
+
+        motion_path = ET.SubElement(platform, "motionpath",interpolation="linear")
+        position_waypoint = ET.SubElement(motion_path, "positionwaypoint")
+        ET.SubElement(position_waypoint, 'x').text = str(x)
+        ET.SubElement(position_waypoint, 'y').text = str(y)
+        ET.SubElement(position_waypoint, 'altitude').text = str(z)
+        ET.SubElement(position_waypoint, 'time').text = str(0.000001)
+
+        fixedrotation = ET.SubElement(platform, "fixedrotation")
+        ET.SubElement(fixedrotation, 'startazimuth').text = str(boresight_azimuth)
+        ET.SubElement(fixedrotation, 'startelevation').text = str(boresight_elevation)
+        ET.SubElement(fixedrotation, 'azimuthrate').text = str(0)
+        ET.SubElement(fixedrotation, 'elevationrate').text = str(0)
+
         receiver = ET.SubElement(platform, "receiver", name=receiver_name, antenna=antenna, timing=timing, nodirect=nodirect, nopropagationloss=nopropagationloss)
         ET.SubElement(receiver, 'window_skip').text = str(window_skip)
         ET.SubElement(receiver, 'window_length').text = str(window_length)
