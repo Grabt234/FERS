@@ -91,7 +91,9 @@ class SimulationControl:
         ET.SubElement(timing, 'frequency').text = str(frequency)
 
         if (alpha != "undefined" and weight != "undefined"):
-            ET.SubElement(timing, 'noise_entry',alpha=alpha, weight=weight)
+            noise = ET.SubElement(timing, 'noise_entry',alpha=alpha, weight=weight)
+            ET.SubElement(noise, 'alpha').text = str(alpha)
+            ET.SubElement(noise, 'weight').text =  str(weight)
 
         
         ET.SubElement(timing, 'freq_offset').text = str(freq_offset)
@@ -105,7 +107,8 @@ class SimulationControl:
         
         if (phase_offset != "undefined"):
             ET.SubElement(timing, 'random_phase_offset').text = str(std_dev_phase_offset)
-        else:ET.SubElement(timing, 'random_phase_offset').text = str(0)
+        else:
+            ET.SubElement(timing, 'random_phase_offset').text = str(0)
         
         self.pulses.append(timing)
 
@@ -135,7 +138,7 @@ class SimulationControl:
         ET.SubElement(ant, 'efficiency').text = str(efficiency)
         ET.SubElement(ant, 'diameter').text = str(diameter)
     
-    def define_isotropic_target(self, name, rcs):
+    def define_isotropic_target_platform(self, platform_name, target_name, rcs):
         """Define an isotropic radiator
 
         Args:
@@ -143,11 +146,12 @@ class SimulationControl:
             rcs (string): rcs of target
         """
 
-        target = ET.SubElement(self.simulation, "target", name=name)
+        platform = ET.SubElement(self.simulation, "platform", name=platform_name)
+        target = ET.SubElement(platform, "target", name=target_name)
         rcs_element = ET.SubElement(target, "rcs", type="isotropic")
         ET.SubElement(rcs_element, "value").text = str(rcs)
 
-    def define_receiver(self, name, antenna, timing, nodirect, nopropagationloss, window_skip, window_length, prf, noise_temp):
+    def define_receiver_platform(self, platform_name, receiver_name, antenna, timing, nodirect, nopropagationloss, window_skip, window_length, prf, noise_temp):
         """Define a reciever with specified clock and antenna
 
         Args:
@@ -162,13 +166,14 @@ class SimulationControl:
             noise_temp (string): Noise temperature of the receiver
         """
 
-        receiver = ET.SubElement(self.simulation, "receiver", name=name, antenna=antenna, timing=timing, nodirect=nodirect, nopropagationloss=nopropagationloss)
+        platform = ET.SubElement(self.simulation, "platform", name=platform_name)
+        receiver = ET.SubElement(platform, "receiver", name=receiver_name, antenna=antenna, timing=timing, nodirect=nodirect, nopropagationloss=nopropagationloss)
         ET.SubElement(receiver, 'window_skip').text = str(window_skip)
         ET.SubElement(receiver, 'window_length').text = str(window_length)
         ET.SubElement(receiver, 'prf').text = str(prf)
         ET.SubElement(receiver, 'noise_temp').text = str(noise_temp)
 
-
+        
     def set_export_options(self, xml="true", csv="true", binary="false", csvbinary="false"):
         export = ET.SubElement(self.parameters, 'export', xml=xml, csv=csv, binary=binary, csvbinary=csvbinary)
 
