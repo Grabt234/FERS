@@ -98,11 +98,14 @@ class SimulationControl:
 
         if (freq_offset != "undefined"):
             ET.SubElement(timing, 'random_freq_offset').text = str(std_dev_freq_offset)
+        else:
+            ET.SubElement(timing, 'random_freq_offset').text = str(0)
 
         ET.SubElement(timing, 'phase_offset').text = str(phase_offset)
         
         if (phase_offset != "undefined"):
             ET.SubElement(timing, 'random_phase_offset').text = str(std_dev_phase_offset)
+        else:ET.SubElement(timing, 'random_phase_offset').text = str(0)
         
         self.pulses.append(timing)
 
@@ -141,8 +144,8 @@ class SimulationControl:
         """
 
         target = ET.SubElement(self.simulation, "target", name=name)
-        ET.SubElement(target, "rcs", type="isotropic")
-        ET.SubElement(target, "value").text = str(rcs)
+        rcs_element = ET.SubElement(target, "rcs", type="isotropic")
+        ET.SubElement(rcs_element, "value").text = str(rcs)
 
     def define_receiver(self, name, antenna, timing, nodirect, nopropagationloss, window_skip, window_length, prf, noise_temp):
         """Define a reciever with specified clock and antenna

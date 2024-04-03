@@ -113,6 +113,9 @@ results are likely to be unreliable. -->
         <xs:element ref="frequency" />
         <xs:element minOccurs="0" ref="freq_offset" />
         <xs:element minOccurs="0" ref="phase_offset" />
+        <xs:element minOccurs="0" ref="random_freq_offset" />
+        <xs:element minOccurs="0" ref="random_phase_offset" />
+        <xs:element minOccurs="0" ref="noise_entry" />
       </xs:sequence>
       <xs:attribute name="name" use="required" />
       <xs:attribute name="synconpulse" default="true">
@@ -144,6 +147,10 @@ results are likely to be unreliable. -->
   <xs:element name="freq_offset" type="xs:string" />
   <!-- Offset from system frequency -->
   <xs:element name="phase_offset" type="xs:string" />
+  <!-- stddev of Offset from system frequency -->
+  <xs:element name="random_freq_offset" type="xs:string" />
+  <!-- Offset from system frequency -->
+  <xs:element name="random_phase_offset" type="xs:string" />
   <!-- Added* [radians] Optional -->
   <!-- Antenna -->
   <!-- efficiency? added: Should this have been added? Was getting an error when defining it in
@@ -335,6 +342,8 @@ results are likely to be unreliable. -->
       <xs:attribute name="type" use="required" />
       <xs:attribute name="antenna" use="required" />
       <xs:attribute name="timing" use="required" />
+      <xs:attribute name="nodirect" use="required" />
+      <xs:attribute name="nopropagationloss" use="required" />
     </xs:complexType>
   </xs:element>
   <xs:element name="window_skip" type="xs:string" />
