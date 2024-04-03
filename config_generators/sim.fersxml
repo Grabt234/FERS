@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version="1.0"?>
 <simulation name="milosar">
     <parameters>
         <starttime>0.001</starttime>
@@ -44,7 +44,8 @@
             <startelevation>6.283185307179586</startelevation>
             <elevationrate>0</elevationrate>
         </fixedrotation>
-        <transmitter name="transmitter" type="pulsed" antenna="tx_rx_antenna" pulse="up_chirp" timing="clock">
+        <transmitter name="transmitter" type="pulsed" antenna="tx_rx_antenna" pulse="up_chirp"
+            timing="clock">
             <prf>1000</prf>
         </transmitter>
     </platform>
@@ -69,7 +70,8 @@
             <startelevation>6.283185307179586</startelevation>
             <elevationrate>0</elevationrate>
         </fixedrotation>
-        <receiver name="receiver" nodirect="true" antenna="tx_rx_antenna" nopropagationloss="false" timing="clock">
+        <receiver name="receiver" nodirect="true" antenna="tx_rx_antenna" nopropagationloss="false"
+            timing="clock">
             <window_skip>0</window_skip>
             <window_length>0.001</window_length>
             <prf>1000</prf>

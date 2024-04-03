@@ -34,8 +34,8 @@ results are likely to be unreliable. -->
 <!ATTLIST timing
     name CDATA #REQUIRED
     synconpulse (true|false) "true"> <!-- Name of the timing source -->
-<!ELEMENT noise_entry (alpha,weight)>
-<!ELEMENT alpha (#PCDATA)> <!-- Noise category alpha -->
+<!ELEMENT noise_entry (alpha1,weight)>
+<!ELEMENT alpha1 (#PCDATA)> <!-- Noise category alpha -->
 <!ELEMENT weight (#PCDATA)> <!-- Weighting of noise in the category -->
 <!ELEMENT freq_offset (#PCDATA)> <!-- Offset from system frequency -->
 
