@@ -31,7 +31,7 @@ void printUsage(const std::string &programName)
               << "Options:\n"
               << "  -h, --help      Show this help message\n"
               << "  -p, --path      fersxml file path (required)\n"
-              << "  -s, --schema    fersxml.xsd schema location (requried)"
+              << "  -s, --schema    fersxml.xsd schema location (requried used by validator)"
               << "  -v, --verbose   run with verbose outputs (optional)\n";
 }
 
@@ -155,7 +155,13 @@ int main(int argc, char *argv[])
         std::cout << "XML document is valid" << std::endl;
 
         // Command to run xml_validator_output with mode and strFilePath as argument
-        std::string command = "./xml_validator_output " + strFilePath;
+        std::string command = "./xml_validator_output -p " + strFilePath;
+        if (bRunAsVerbose)
+        {
+            std::string command = "./xml_validator_output -p " + strFilePath + " -v";
+            std::cout << "Running: " + command << std::endl;
+        }
+
         // Run the command using system() function
         int result = std::system(command.c_str());
 
@@ -164,8 +170,6 @@ int main(int argc, char *argv[])
             std::cerr << "Failed to run xml_validator_output." << std::endl;
             return 1;
         }
-
-        std::cout << endl;
 
         // Prompting user whether they want to run the kml_visualiser
         char run_kml_visualiser = 'n';
@@ -176,7 +180,7 @@ int main(int argc, char *argv[])
         std::string outputName;
         std::string input;
 
-        std::cout << "Do you want to run the kml_visualiser program? (y/N): ";
+        std::cout << "Do you want to run the kml_visualiser program? (y/n): ";
         std::getline(std::cin, input);
 
         if (!input.empty())
@@ -194,7 +198,7 @@ int main(int argc, char *argv[])
                 outputName = getFileNameFromPath(strFilePath);
             }
 
-            std::cout << "Do you want to enter custom referenceLatitude, referenceLongitude, and referenceAltitude? (y/N): ";
+            std::cout << "Do you want to enter custom referenceLatitude, referenceLongitude, and referenceAltitude? (y/n): ";
             input.clear();
             std::getline(std::cin, input);
             custom_coordinates = input.empty() ? 'n' : input[0];

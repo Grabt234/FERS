@@ -339,7 +339,6 @@ results are likely to be unreliable. -->
         <xs:element minOccurs="0" ref="noise_temp" />
       </xs:sequence>
       <xs:attribute name="name" use="required" />
-      <xs:attribute name="type" use="required" />
       <xs:attribute name="antenna" use="required" />
       <xs:attribute name="timing" use="required" />
       <xs:attribute name="nodirect" use="required" />
