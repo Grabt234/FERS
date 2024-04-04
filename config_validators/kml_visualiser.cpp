@@ -268,6 +268,9 @@ void processElement(const DOMElement *element, std::ofstream &kmlFile, double re
     populateAntennaMaps(document->getDocumentElement(), isotropic_antennas, patterned_antennas);
 
     // Check if the element is a platform
+    std::string tagNameStr = xercesc::XMLString::transcode(element->getTagName());
+    std::cout << "Processing: " + tagNameStr << std::endl;
+
     if (XMLString::equals(element->getTagName(), platformTag))
     {
         // Get the positionwaypoint element
@@ -304,17 +307,11 @@ void processElement(const DOMElement *element, std::ofstream &kmlFile, double re
         // Determine the type of placemark to use
         std::string placemarkStyle;
         if (element->getElementsByTagName(receiverTag)->getLength() > 0)
-        {
             placemarkStyle = "receiver";
-        }
         else if (element->getElementsByTagName(transmitterTag)->getLength() > 0)
-        {
             placemarkStyle = "transmitter";
-        }
         else if (element->getElementsByTagName(targetTag)->getLength() > 0)
-        {
             placemarkStyle = "target";
-        }
 
         // Determine if antenna 'pattern' is isotropic or patterned
         bool isIsotropic = false;
