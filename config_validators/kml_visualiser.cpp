@@ -244,10 +244,11 @@ const DOMElement *getAntennaElementWithSincPattern(const DOMElement *rootElement
 }
 
 // Function to process the DOMElement, extract necessary data from FERSXML file, and output accordingly to KML file
-void processElement(const DOMElement *element, std::ofstream &kmlFile, double referenceLatitude, double referenceLongitude, double referenceAltitude, DOMDocument *document)
+bool processPlatformElement(const DOMElement *element, std::ofstream &kmlFile, double referenceLatitude, double referenceLongitude, double referenceAltitude, DOMDocument *document)
 {
 
     // Defining constants
+    const XMLCh *platformName = XMLString::transcode("name");
     const XMLCh *platformTag = XMLString::transcode("platform");
     const XMLCh *receiverTag = XMLString::transcode("receiver");
     const XMLCh *transmitterTag = XMLString::transcode("transmitter");
@@ -267,42 +268,38 @@ void processElement(const DOMElement *element, std::ofstream &kmlFile, double re
     std::map<std::string, const DOMElement *> patterned_antennas;
     populateAntennaMaps(document->getDocumentElement(), isotropic_antennas, patterned_antennas);
 
-    // Check if the element is a platform
-    std::string tagNameStr = xercesc::XMLString::transcode(element->getTagName());
-    std::cout << "Processing: " + tagNameStr << std::endl;
-
+    // First check we have a platform to work with, otherwise we dont care
     if (!XMLString::equals(element->getTagName(), platformTag))
-        return;
+        return true;
     // Get the positionwaypoint element
     // Check if the getElementsByTagName() function returns a valid result before using it
     DOMNodeList *positionWaypointList = element->getElementsByTagName(positionWaypointTag);
     if (positionWaypointList->getLength() == 0)
-    {
-        return;
-    }
+        return false;
 
+    // Get the motionpath element where motion path = [waybpoint1 waypoint2 ...]
+    const DOMElement *motionPathElement = dynamic_cast<const DOMElement *>(element->getElementsByTagName(motionPathTag)->item(0));
+    // Extract the interpolation attribute
+    const XMLCh *interpolation = motionPathElement->getAttribute(interpolationAttr);
+    // Determine if the interpolation is linear, hyperbolic or cubic
+    bool isLinear = (XMLString::equals(interpolation, XMLString::transcode("linear")));
+    bool isHyperbolic = (XMLString::equals(interpolation, XMLString::transcode("hyperbolic")));
+    bool isCubic = (XMLString::equals(interpolation, XMLString::transcode("cubic")));
+
+    // Get a single waypoint
     const DOMElement *positionWaypointElement = dynamic_cast<const DOMElement *>(element->getElementsByTagName(positionWaypointTag)->item(0));
-
     // Extract the position coordinates
     double x = std::stod(XMLString::transcode(positionWaypointElement->getElementsByTagName(xTag)->item(0)->getTextContent()));
     double y = std::stod(XMLString::transcode(positionWaypointElement->getElementsByTagName(yTag)->item(0)->getTextContent()));
     double altitude = std::stod(XMLString::transcode(positionWaypointElement->getElementsByTagName(altitudeTag)->item(0)->getTextContent()));
+    auto strPlatformName = std::string(XMLString::transcode(element->getAttribute(platformName)));
+    std::cout << "INFO: Processing " + strPlatformName + " way point: x = " + std::to_string(x) + " y = " + std::to_string(y) + " alt = " + std::to_string(altitude) << std::endl;
 
     // Rough estimation equirectangular projection method.
     double longitude = referenceLongitude + x / (cos(referenceLatitude * M_PI / 180) * 111319.9);
     double latitude = referenceLatitude + y / 111319.9;
     double altitudeAboveGround = altitude - referenceAltitude;
-
-    // Get the motionpath element
-    const DOMElement *motionPathElement = dynamic_cast<const DOMElement *>(element->getElementsByTagName(motionPathTag)->item(0));
-
-    // Extract the interpolation attribute
-    const XMLCh *interpolation = motionPathElement->getAttribute(interpolationAttr);
-
-    // Determine if the interpolation is linear, hyperbolic or cubic
-    bool isLinear = (XMLString::equals(interpolation, XMLString::transcode("linear")));
-    bool isHyperbolic = (XMLString::equals(interpolation, XMLString::transcode("hyperbolic")));
-    bool isCubic = (XMLString::equals(interpolation, XMLString::transcode("cubic")));
+    std::cout << "INFO: Processing " + strPlatformName + " geographic way point: long = " + std::to_string(longitude) + " lat = " + std::to_string(latitude) + " alt = " + std::to_string(altitudeAboveGround) << std::endl;
 
     // Determine the type of placemark to use
     std::string placemarkStyle;
@@ -313,10 +310,11 @@ void processElement(const DOMElement *element, std::ofstream &kmlFile, double re
     else if (element->getElementsByTagName(targetTag)->getLength() > 0)
         placemarkStyle = "target";
 
-    // Determine if antenna 'pattern' is isotropic or patterned
+    // Determine antenna parameters of receiver or transmitter
+    bool bIsReceiver = element->getElementsByTagName(receiverTag)->getLength() > 0;
+    bool bIsTransmitter = element->getElementsByTagName(transmitterTag)->getLength() > 0;
     bool isIsotropic = false;
-
-    if (element->getElementsByTagName(receiverTag)->getLength() > 0)
+    if (bIsReceiver)
     {
         const DOMElement *receiverElement = dynamic_cast<const DOMElement *>(element->getElementsByTagName(receiverTag)->item(0));
         const XMLCh *antennaAttr = XMLString::transcode("antenna");
@@ -325,7 +323,7 @@ void processElement(const DOMElement *element, std::ofstream &kmlFile, double re
 
         isIsotropic = isAntennaIsotropic(antennaName, isotropic_antennas);
     }
-    else if (element->getElementsByTagName(transmitterTag)->getLength() > 0)
+    else if (bIsTransmitter)
     {
         const DOMElement *transmitterElement = dynamic_cast<const DOMElement *>(element->getElementsByTagName(transmitterTag)->item(0));
         const XMLCh *antennaAttr = XMLString::transcode("antenna");
@@ -334,9 +332,8 @@ void processElement(const DOMElement *element, std::ofstream &kmlFile, double re
 
         isIsotropic = isAntennaIsotropic(antennaName, isotropic_antennas);
     }
-
-    // Testing if 'isIsotropic' set to True if pattern = isotropic
-    // std::cout << isIsotropic << std::endl;
+    else
+        std::cout << "INFO: Processing " + strPlatformName + " does not have member receiver or transmitter";
 
     // If the associated pattern is isotropic, add a circular ring of radius 20 km
     if (isIsotropic)
@@ -669,6 +666,8 @@ void processElement(const DOMElement *element, std::ofstream &kmlFile, double re
         kmlFile << "    </Point>\n";
         kmlFile << "</Placemark>\n";
     }
+
+    return true;
 }
 
 // Function to traverse the DOMNode by recursively calling itself and processElement()
@@ -677,7 +676,12 @@ void traverseDOMNode(const DOMNode *node, std::ofstream &kmlFile, double referen
     if (node->getNodeType() == DOMNode::ELEMENT_NODE)
     {
         const DOMElement *element = dynamic_cast<const DOMElement *>(node);
-        processElement(element, kmlFile, referenceLatitude, referenceLongitude, referenceAltitude, document);
+        if (!processPlatformElement(element, kmlFile, referenceLatitude, referenceLongitude, referenceAltitude, document))
+        {
+            // Check if the element is a platform
+            std::string tagNameStr = xercesc::XMLString::transcode(element->getTagName());
+            std::cout << "ERROR: Failed to processing: " + tagNameStr << std::endl;
+        }
     }
 
     for (DOMNode *child = node->getFirstChild(); child != nullptr; child = child->getNextSibling())
