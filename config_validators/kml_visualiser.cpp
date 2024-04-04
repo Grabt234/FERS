@@ -324,12 +324,13 @@ bool processPlatformElement(const DOMElement *element, std::ofstream &kmlFile, d
     // Extract the interpolation attribute
     const XMLCh *interpolation = motionPathElement->getAttribute(interpolationAttr);
     // Determine if the interpolation is linear, hyperbolic or cubic
-    bool isLinear = (XMLString::equals(interpolation, XMLString::transcode("linear")));
-    bool isHyperbolic = (XMLString::equals(interpolation, XMLString::transcode("hyperbolic")));
-    bool isCubic = (XMLString::equals(interpolation, XMLString::transcode("cubic")));
+    bool bIsLinear = (XMLString::equals(interpolation, XMLString::transcode("linear")));
+    bool bIsHyperbolic = (XMLString::equals(interpolation, XMLString::transcode("hyperbolic")));
+    bool bIsCubic = (XMLString::equals(interpolation, XMLString::transcode("cubic")));
 
     // Get a single waypoint
     const DOMElement *positionWaypointElement = dynamic_cast<const DOMElement *>(element->getElementsByTagName(positionWaypointTag)->item(0));
+
     // Extract the position coordinates
     double x = std::stod(XMLString::transcode(positionWaypointElement->getElementsByTagName(xTag)->item(0)->getTextContent()));
     double y = std::stod(XMLString::transcode(positionWaypointElement->getElementsByTagName(yTag)->item(0)->getTextContent()));
@@ -355,6 +356,7 @@ bool processPlatformElement(const DOMElement *element, std::ofstream &kmlFile, d
     // Determine antenna parameters of receiver or transmitter
     bool bIsReceiver = element->getElementsByTagName(receiverTag)->getLength() > 0;
     bool bIsTransmitter = element->getElementsByTagName(transmitterTag)->getLength() > 0;
+    bool bIsTarget = element->getElementsByTagName(targetTag)->getLength() > 0;
 
     bool bIsIsotropicPattern = false;
     bool bIsSincPattern = false;
@@ -379,6 +381,10 @@ bool processPlatformElement(const DOMElement *element, std::ofstream &kmlFile, d
         bIsIsotropicPattern = IsAntennaIsotropic(antennaName, isotropic_antennas);
         bIsSincPattern = IsAntennaSinc(antennaName, isotropic_antennas);
     }
+    else if (bIsTarget)
+    {
+        // do nothing
+    }
     else
     {
         std::cout << "INFO: Processing " + strPlatformName + " does not have member receiver or transmitter";
@@ -393,12 +399,6 @@ bool processPlatformElement(const DOMElement *element, std::ofstream &kmlFile, d
         AddIsotropicRadionPatternToKML(kmlFile, dLongitude, dLatitude, dAltitudeAboveGround, dCircleRadius, iNumPoints);
     }
     else if (bIsSincPattern)
-    {
-    }
-    else
-        std::cout << "WARNING: antenna pattern not isotropic or sinc, no pattern plotted";
-
-    if (!bIsIsotropicPattern && (bIsTransmitter || bIsReceiver))
     {
         // Get starting oposition and orientation of antenna
         const XMLCh *startAzimuthTag = XMLString::transcode("startazimuth");
@@ -439,50 +439,43 @@ bool processPlatformElement(const DOMElement *element, std::ofstream &kmlFile, d
         const DOMElement *sincAntennaElement = getAntennaElementWithSincPattern(document->getDocumentElement());
 
         // Extract alpha, beta, and gamma values if the antenna element was found
-        if (sincAntennaElement != nullptr)
+        double alpha = std::stod(XMLString::transcode(sincAntennaElement->getElementsByTagName(alphaTag)->item(0)->getTextContent()));
+        double beta = std::stod(XMLString::transcode(sincAntennaElement->getElementsByTagName(betaTag)->item(0)->getTextContent()));
+        double gamma = std::stod(XMLString::transcode(sincAntennaElement->getElementsByTagName(gammaTag)->item(0)->getTextContent()));
+
+        double angle_3dB_drop_deg = find_3db_drop_angle(alpha, beta, gamma);
+
+        // Calculate end coordinates for both side lines
+        double sideLine1Azimuth = dStartAzimuth - angle_3dB_drop_deg;
+        double sideLine2Azimuth = dStartAzimuth + angle_3dB_drop_deg;
+        double sideLine1DestdLatitude, sideLine1DestdLongitude;
+        double sideLine2DestdLatitude, sideLine2DestdLongitude;
+
+        calculateDestinationCoordinate(dStartLatitude, dStartLongitude, sideLine1Azimuth, dArrowLength, sideLine1DestdLatitude, sideLine1DestdLongitude);
+        calculateDestinationCoordinate(dStartLatitude, dStartLongitude, sideLine2Azimuth, dArrowLength, sideLine2DestdLatitude, sideLine2DestdLongitude);
+
+        std::stringstream sideLine1EndCoordinatesStream, sideLine2EndCoordinatesStream;
+        sideLine1EndCoordinatesStream << std::fixed << std::setprecision(6) << sideLine1DestdLongitude << "," << sideLine1DestdLatitude << "," << dStartAltitude;
+        sideLine2EndCoordinatesStream << std::fixed << std::setprecision(6) << sideLine2DestdLongitude << "," << sideLine2DestdLatitude << "," << dStartAltitude;
+        std::string sideLine1EndCoordinates = sideLine1EndCoordinatesStream.str();
+        std::string sideLine2EndCoordinates = sideLine2EndCoordinatesStream.str();
+
+        // Add placemarks for side lines
+        for (int i = 1; i <= 2; ++i)
         {
-            double alpha = std::stod(XMLString::transcode(sincAntennaElement->getElementsByTagName(alphaTag)->item(0)->getTextContent()));
-            double beta = std::stod(XMLString::transcode(sincAntennaElement->getElementsByTagName(betaTag)->item(0)->getTextContent()));
-            double gamma = std::stod(XMLString::transcode(sincAntennaElement->getElementsByTagName(gammaTag)->item(0)->getTextContent()));
+            std::string sideLineName = "Antenna Side Line " + std::to_string(i);
+            std::string sideLineEndCoordinates = (i == 1) ? sideLine1EndCoordinates : sideLine2EndCoordinates;
 
-            double angle_3dB_drop_deg = find_3db_drop_angle(alpha, beta, gamma);
-
-            // Calculate end coordinates for both side lines
-            double sideLine1Azimuth = dStartAzimuth - angle_3dB_drop_deg;
-            double sideLine2Azimuth = dStartAzimuth + angle_3dB_drop_deg;
-            double sideLine1DestdLatitude, sideLine1DestdLongitude;
-            double sideLine2DestdLatitude, sideLine2DestdLongitude;
-
-            calculateDestinationCoordinate(dStartLatitude, dStartLongitude, sideLine1Azimuth, dArrowLength, sideLine1DestdLatitude, sideLine1DestdLongitude);
-            calculateDestinationCoordinate(dStartLatitude, dStartLongitude, sideLine2Azimuth, dArrowLength, sideLine2DestdLatitude, sideLine2DestdLongitude);
-
-            std::stringstream sideLine1EndCoordinatesStream, sideLine2EndCoordinatesStream;
-            sideLine1EndCoordinatesStream << std::fixed << std::setprecision(6) << sideLine1DestdLongitude << "," << sideLine1DestdLatitude << "," << dStartAltitude;
-            sideLine2EndCoordinatesStream << std::fixed << std::setprecision(6) << sideLine2DestdLongitude << "," << sideLine2DestdLatitude << "," << dStartAltitude;
-            std::string sideLine1EndCoordinates = sideLine1EndCoordinatesStream.str();
-            std::string sideLine2EndCoordinates = sideLine2EndCoordinatesStream.str();
-
-            // Add placemarks for side lines
-            for (int i = 1; i <= 2; ++i)
-            {
-                std::string sideLineName = "Antenna Side Line " + std::to_string(i);
-                std::string sideLineEndCoordinates = (i == 1) ? sideLine1EndCoordinates : sideLine2EndCoordinates;
-
-                kmlFile << "<Placemark>\n";
-                kmlFile << "      <name>" << sideLineName << "</name>\n";
-                kmlFile << "      <styleUrl>#lineStyleBlue</styleUrl>\n";
-                kmlFile << "      <LineString>\n";
-                kmlFile << "            <tessellate>1</tessellate>\n";
-                kmlFile << "            <coordinates>\n";
-                kmlFile << "            " + strCoordinates + " " + sideLineEndCoordinates + "\n";
-                kmlFile << "            </coordinates>\n";
-                kmlFile << "      </LineString>\n";
-                kmlFile << "</Placemark>\n";
-            }
-        }
-        else
-        {
-            std::cerr << "Error: Antenna element with pattern='sinc' not found in the XML file" << std::endl;
+            kmlFile << "<Placemark>\n";
+            kmlFile << "      <name>" << sideLineName << "</name>\n";
+            kmlFile << "      <styleUrl>#lineStyleBlue</styleUrl>\n";
+            kmlFile << "      <LineString>\n";
+            kmlFile << "            <tessellate>1</tessellate>\n";
+            kmlFile << "            <coordinates>\n";
+            kmlFile << "            " + strCoordinates + " " + sideLineEndCoordinates + "\n";
+            kmlFile << "            </coordinates>\n";
+            kmlFile << "      </LineString>\n";
+            kmlFile << "</Placemark>\n";
         }
 
         kmlFile << "<Placemark>\n";
@@ -507,27 +500,28 @@ bool processPlatformElement(const DOMElement *element, std::ofstream &kmlFile, d
         kmlFile << "      </IconStyle>\n";
         kmlFile << "</Placemark>\n";
     }
+    else if (bIsTarget)
+    {
+        // Do nothing
+    }
+    else
+        std::cout << "WARNING: antenna pattern not isotropic or sinc, no pattern plotted" << std::endl;
+    ;
 
     // Write the placemark data to the KML file
     kmlFile << "<Placemark>\n";
     kmlFile << "    <name>" << XMLString::transcode(element->getAttribute(XMLString::transcode("name"))) << "</name>\n";
     kmlFile << "    <description>" << XMLString::transcode(element->getAttribute(XMLString::transcode("description"))) << "</description>\n";
 
-    if (element->getElementsByTagName(receiverTag)->getLength() > 0)
-    {
+    if (bIsReceiver)
         kmlFile << "    <styleUrl>#receiver</styleUrl>\n";
-    }
-    else if (element->getElementsByTagName(transmitterTag)->getLength() > 0)
-    {
+    else if (bIsTransmitter)
         kmlFile << "    <styleUrl>#transmitter</styleUrl>\n";
-    }
-    else if (element->getElementsByTagName(targetTag)->getLength() > 0)
-    {
+    else if (bIsTarget)
         kmlFile << "    <styleUrl>#target</styleUrl>\n";
-    }
 
     // If the interpolation is linear, hyperbolic or exponential, use the gx:Track element
-    if (isLinear || isHyperbolic || isCubic)
+    if (bIsLinear || bIsHyperbolic || bIsCubic)
     {
         kmlFile << "    <gx:Track>\n";
         if (dAltitudeAboveGround > 0)
@@ -560,7 +554,7 @@ bool processPlatformElement(const DOMElement *element, std::ofstream &kmlFile, d
             double time = std::stod(XMLString::transcode(positionWaypointElement->getElementsByTagName(timeTag)->item(0)->getTextContent()));
 
             // Check if interpolation is hyperbolic
-            if (isHyperbolic)
+            if (bIsHyperbolic)
             {
                 // Calculate the hyperbolic path and update dLongitude and dLatitude values accordingly
                 double a = 0.5;                                                              // Set the desired value for 'a' based on the shape of the hyperbola
@@ -570,7 +564,7 @@ bool processPlatformElement(const DOMElement *element, std::ofstream &kmlFile, d
             }
 
             // Check if interpolation is cubic
-            if (isCubic && i + 1 < positionWaypointList->getLength())
+            if (bIsCubic && i + 1 < positionWaypointList->getLength())
             {
                 // Calculate time difference between two consecutive position waypoints
                 const DOMElement *nextPositionWaypointElement = dynamic_cast<const DOMElement *>(positionWaypointList->item(i + 1));
@@ -641,16 +635,14 @@ bool processPlatformElement(const DOMElement *element, std::ofstream &kmlFile, d
             kmlFile << "        <extrude>1</extrude>\n";
         }
         else
-        {
             kmlFile << "        <altitudeMode>clampToGround</altitudeMode>\n";
-        }
 
         kmlFile << "    </Point>\n";
     }
 
     kmlFile << "</Placemark>\n";
 
-    if (isLinear || isHyperbolic || isCubic)
+    if (bIsLinear || bIsHyperbolic || bIsCubic)
     {
         // Get the first and last position waypoints
         const DOMElement *firstPositionWaypointElement = dynamic_cast<const DOMElement *>(positionWaypointList->item(0));
