@@ -239,7 +239,7 @@ std::vector<std::pair<double, double>> generate_circle_coordinates(double lat, d
 void AddIsotropicRadionPatternToKML(std::ofstream &kmlFile, double dLatitude, double dLongitude, double dAltitude, double dCircleRadius, int iNumPoints)
 {
 
-    std::cout << "INFO: Adding Isotropic radiation pattern to kml" << std::endl;
+    std::cout << "INFO: Adding Isotropic radiation pattern to kml at long = " + std::to_string(dLongitude) + " lat = " + std::to_string(dLatitude) << std::endl;
 
     kmlFile << "<Placemark>\n";
     kmlFile << "    <name>Isotropic pattern range</name>\n";
@@ -253,9 +253,8 @@ void AddIsotropicRadionPatternToKML(std::ofstream &kmlFile, double dLatitude, do
     kmlFile << "                <coordinates>\n";
 
     for (const auto &coord : circle_coordinates)
-    {
         kmlFile << "                    " << coord.second << "," << coord.first << "," << dAltitude << "\n";
-    }
+
     // Close the circle by repeating the first point
     kmlFile << "                    " << circle_coordinates[0].second << "," << circle_coordinates[0].first << "," << dAltitude << "\n";
 
@@ -396,7 +395,7 @@ bool processPlatformElement(const DOMElement *element, std::ofstream &kmlFile, d
     {
         double dCircleRadius = 20; // Radius in km
         int iNumPoints = 100;      // Number of points to form the circle
-        AddIsotropicRadionPatternToKML(kmlFile, dLongitude, dLatitude, dAltitudeAboveGround, dCircleRadius, iNumPoints);
+        AddIsotropicRadionPatternToKML(kmlFile, dLatitude, dLongitude, dAltitudeAboveGround, dCircleRadius, iNumPoints);
     }
     else if (bIsSincPattern)
     {
