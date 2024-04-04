@@ -1,6 +1,6 @@
 import xml.etree.ElementTree as ET
 
-class SimulationControl:
+class SimulationConfiguration:
     def __init__(self, name):
         """_summary_
 
@@ -135,8 +135,21 @@ class SimulationControl:
         ant = ET.SubElement(self.simulation, "antenna", pattern='parabolic', name=name)
         ET.SubElement(ant, 'diameter').text = str(diameter)
         ET.SubElement(ant, 'efficiency').text = str(efficiency)
+
+    def define_sync_antenna(self, name, efficiency, alpha, beta, gamma):
+        """Define antenna
+
+        Args:
+            TODO
+        """
+
+        ant = ET.SubElement(self.simulation, "antenna", pattern='sinc', name=name)
+        ET.SubElement(ant, 'alpha').text = str(alpha)
+        ET.SubElement(ant, 'beta').text = str(beta)
+        ET.SubElement(ant, 'gamma').text = str(gamma)
+        ET.SubElement(ant, 'efficiency').text = str(efficiency)
     
-    def define_static_isotropic_target_platform(self, platform_name, target_name, rcs, x, y, z, boresight_azimuth, boresight_elevation):
+    def create_static_isotropic_target_platform(self, platform_name, target_name, rcs, x, y, z, boresight_azimuth, boresight_elevation):
         """Define an isotropic radiator
 
         Args:
@@ -163,7 +176,7 @@ class SimulationControl:
         rcs_element = ET.SubElement(target, "rcs", type="isotropic")
         ET.SubElement(rcs_element, "value").text = str(rcs)
 
-    def define_static_receiver_platform(self, platform_name, receiver_name, antenna, timing, nodirect, nopropagationloss, window_skip, window_length, prf, noise_temp, x, y, z, boresight_azimuth, boresight_elevation):
+    def create_static_receiver_platform(self, platform_name, receiver_name, antenna, timing, nodirect, nopropagationloss, window_skip, window_length, prf, noise_temp, x, y, z, boresight_azimuth, boresight_elevation):
         """Define a reciever with specified clock and antenna
 
         Args:
