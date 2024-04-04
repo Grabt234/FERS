@@ -176,6 +176,46 @@ class SimulationConfiguration:
         rcs_element = ET.SubElement(target, "rcs", type="isotropic")
         ET.SubElement(rcs_element, "value").text = str(rcs)
 
+    def __add_waypoint(self, path, x, y, z, t):
+
+        point = ET.SubElement(path, "positionwaypoint")
+
+        t_x = ET.SubElement(point, 'x')
+        t_x.text = str(x)
+
+        t_y = ET.SubElement(point, 'y')
+        t_y.text = str(y)
+
+        t_a = ET.SubElement(point, 'altitude')
+        t_a.text = str(z)
+
+        t_t = ET.SubElement(point, 'time')
+        t_t.text = str(t)
+
+    def create_moving_isotropic_target_platform(self, platform_name, target_name, rcs, x, y, z, t):
+        """Define an isotropic radiator
+
+        Args:
+            name (string): name of target
+            rcs (string): rcs of target
+        """
+
+        platform = ET.SubElement(self.simulation, "platform", name=platform_name)
+        
+        motion_path = ET.SubElement(platform, "motionpath",interpolation="linear")
+        for i in range(len(x)):
+            self.__add_waypoint(motion_path, x[i], y[i], z[i], t[i])
+
+        fixedrotation = ET.SubElement(platform, "fixedrotation")
+        ET.SubElement(fixedrotation, 'startazimuth').text = str(0)
+        ET.SubElement(fixedrotation, 'startelevation').text = str(0)
+        ET.SubElement(fixedrotation, 'azimuthrate').text = str(0)
+        ET.SubElement(fixedrotation, 'elevationrate').text = str(0)
+
+        target = ET.SubElement(platform, "target", name=target_name)
+        rcs_element = ET.SubElement(target, "rcs", type="isotropic")
+        ET.SubElement(rcs_element, "value").text = str(rcs)
+
     def create_static_receiver_platform(self, platform_name, receiver_name, antenna, timing, nodirect, nopropagationloss, window_skip, window_length, prf, noise_temp, x, y, z, boresight_azimuth, boresight_elevation):
         """Define a reciever with specified clock and antenna
 
@@ -212,7 +252,6 @@ class SimulationConfiguration:
         ET.SubElement(receiver, 'prf').text = str(prf)
         ET.SubElement(receiver, 'noise_temp').text = str(noise_temp)
 
-        
     def set_export_options(self, xml="true", csv="true", binary="false", csvbinary="false"):
         export = ET.SubElement(self.parameters, 'export', xml=xml, csv=csv, binary=binary, csvbinary=csvbinary)
 
@@ -231,7 +270,16 @@ class SimulationConfiguration:
             tree.write(f)
 
 # only contains single reflector
-class SimpleStaticTargetPlatform:
+class SimpleStaticIsotropicTargetPlatform:
+    def __init__(self, platform_name, target_name, x, y, z, rcs):
+        self.platform_name = platform_name
+        self.target_name = target_name
+        self.x = x
+        self.y = y
+        self.z = z
+        self.rcs = rcs
+
+class SimpleMovingIsotropicTargetPlatform:
     def __init__(self, platform_name, target_name, x, y, z, t, rcs):
         self.platform_name = platform_name
         self.target_name = target_name
