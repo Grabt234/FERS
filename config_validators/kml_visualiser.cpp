@@ -271,404 +271,403 @@ void processElement(const DOMElement *element, std::ofstream &kmlFile, double re
     std::string tagNameStr = xercesc::XMLString::transcode(element->getTagName());
     std::cout << "Processing: " + tagNameStr << std::endl;
 
-    if (XMLString::equals(element->getTagName(), platformTag))
+    if (!XMLString::equals(element->getTagName(), platformTag))
+        return;
+    // Get the positionwaypoint element
+    // Check if the getElementsByTagName() function returns a valid result before using it
+    DOMNodeList *positionWaypointList = element->getElementsByTagName(positionWaypointTag);
+    if (positionWaypointList->getLength() == 0)
     {
-        // Get the positionwaypoint element
-        // Check if the getElementsByTagName() function returns a valid result before using it
-        DOMNodeList *positionWaypointList = element->getElementsByTagName(positionWaypointTag);
-        if (positionWaypointList->getLength() == 0)
-        {
-            return;
-        }
+        return;
+    }
 
-        const DOMElement *positionWaypointElement = dynamic_cast<const DOMElement *>(element->getElementsByTagName(positionWaypointTag)->item(0));
+    const DOMElement *positionWaypointElement = dynamic_cast<const DOMElement *>(element->getElementsByTagName(positionWaypointTag)->item(0));
 
-        // Extract the position coordinates
-        double x = std::stod(XMLString::transcode(positionWaypointElement->getElementsByTagName(xTag)->item(0)->getTextContent()));
-        double y = std::stod(XMLString::transcode(positionWaypointElement->getElementsByTagName(yTag)->item(0)->getTextContent()));
-        double altitude = std::stod(XMLString::transcode(positionWaypointElement->getElementsByTagName(altitudeTag)->item(0)->getTextContent()));
+    // Extract the position coordinates
+    double x = std::stod(XMLString::transcode(positionWaypointElement->getElementsByTagName(xTag)->item(0)->getTextContent()));
+    double y = std::stod(XMLString::transcode(positionWaypointElement->getElementsByTagName(yTag)->item(0)->getTextContent()));
+    double altitude = std::stod(XMLString::transcode(positionWaypointElement->getElementsByTagName(altitudeTag)->item(0)->getTextContent()));
 
-        // Rough estimation equirectangular projection method.
-        double longitude = referenceLongitude + x / (cos(referenceLatitude * M_PI / 180) * 111319.9);
-        double latitude = referenceLatitude + y / 111319.9;
-        double altitudeAboveGround = altitude - referenceAltitude;
+    // Rough estimation equirectangular projection method.
+    double longitude = referenceLongitude + x / (cos(referenceLatitude * M_PI / 180) * 111319.9);
+    double latitude = referenceLatitude + y / 111319.9;
+    double altitudeAboveGround = altitude - referenceAltitude;
 
-        // Get the motionpath element
-        const DOMElement *motionPathElement = dynamic_cast<const DOMElement *>(element->getElementsByTagName(motionPathTag)->item(0));
+    // Get the motionpath element
+    const DOMElement *motionPathElement = dynamic_cast<const DOMElement *>(element->getElementsByTagName(motionPathTag)->item(0));
 
-        // Extract the interpolation attribute
-        const XMLCh *interpolation = motionPathElement->getAttribute(interpolationAttr);
+    // Extract the interpolation attribute
+    const XMLCh *interpolation = motionPathElement->getAttribute(interpolationAttr);
 
-        // Determine if the interpolation is linear, hyperbolic or cubic
-        bool isLinear = (XMLString::equals(interpolation, XMLString::transcode("linear")));
-        bool isHyperbolic = (XMLString::equals(interpolation, XMLString::transcode("hyperbolic")));
-        bool isCubic = (XMLString::equals(interpolation, XMLString::transcode("cubic")));
+    // Determine if the interpolation is linear, hyperbolic or cubic
+    bool isLinear = (XMLString::equals(interpolation, XMLString::transcode("linear")));
+    bool isHyperbolic = (XMLString::equals(interpolation, XMLString::transcode("hyperbolic")));
+    bool isCubic = (XMLString::equals(interpolation, XMLString::transcode("cubic")));
 
-        // Determine the type of placemark to use
-        std::string placemarkStyle;
-        if (element->getElementsByTagName(receiverTag)->getLength() > 0)
-            placemarkStyle = "receiver";
-        else if (element->getElementsByTagName(transmitterTag)->getLength() > 0)
-            placemarkStyle = "transmitter";
-        else if (element->getElementsByTagName(targetTag)->getLength() > 0)
-            placemarkStyle = "target";
+    // Determine the type of placemark to use
+    std::string placemarkStyle;
+    if (element->getElementsByTagName(receiverTag)->getLength() > 0)
+        placemarkStyle = "receiver";
+    else if (element->getElementsByTagName(transmitterTag)->getLength() > 0)
+        placemarkStyle = "transmitter";
+    else if (element->getElementsByTagName(targetTag)->getLength() > 0)
+        placemarkStyle = "target";
 
-        // Determine if antenna 'pattern' is isotropic or patterned
-        bool isIsotropic = false;
+    // Determine if antenna 'pattern' is isotropic or patterned
+    bool isIsotropic = false;
 
-        if (element->getElementsByTagName(receiverTag)->getLength() > 0)
-        {
-            const DOMElement *receiverElement = dynamic_cast<const DOMElement *>(element->getElementsByTagName(receiverTag)->item(0));
-            const XMLCh *antennaAttr = XMLString::transcode("antenna");
-            const XMLCh *antennaValue = receiverElement->getAttribute(antennaAttr);
-            std::string antennaName = XMLString::transcode(antennaValue);
+    if (element->getElementsByTagName(receiverTag)->getLength() > 0)
+    {
+        const DOMElement *receiverElement = dynamic_cast<const DOMElement *>(element->getElementsByTagName(receiverTag)->item(0));
+        const XMLCh *antennaAttr = XMLString::transcode("antenna");
+        const XMLCh *antennaValue = receiverElement->getAttribute(antennaAttr);
+        std::string antennaName = XMLString::transcode(antennaValue);
 
-            isIsotropic = isAntennaIsotropic(antennaName, isotropic_antennas);
-        }
-        else if (element->getElementsByTagName(transmitterTag)->getLength() > 0)
-        {
-            const DOMElement *transmitterElement = dynamic_cast<const DOMElement *>(element->getElementsByTagName(transmitterTag)->item(0));
-            const XMLCh *antennaAttr = XMLString::transcode("antenna");
-            const XMLCh *antennaValue = transmitterElement->getAttribute(antennaAttr);
-            std::string antennaName = XMLString::transcode(antennaValue);
+        isIsotropic = isAntennaIsotropic(antennaName, isotropic_antennas);
+    }
+    else if (element->getElementsByTagName(transmitterTag)->getLength() > 0)
+    {
+        const DOMElement *transmitterElement = dynamic_cast<const DOMElement *>(element->getElementsByTagName(transmitterTag)->item(0));
+        const XMLCh *antennaAttr = XMLString::transcode("antenna");
+        const XMLCh *antennaValue = transmitterElement->getAttribute(antennaAttr);
+        std::string antennaName = XMLString::transcode(antennaValue);
 
-            isIsotropic = isAntennaIsotropic(antennaName, isotropic_antennas);
-        }
+        isIsotropic = isAntennaIsotropic(antennaName, isotropic_antennas);
+    }
 
-        // Testing if 'isIsotropic' set to True if pattern = isotropic
-        // std::cout << isIsotropic << std::endl;
+    // Testing if 'isIsotropic' set to True if pattern = isotropic
+    // std::cout << isIsotropic << std::endl;
 
-        // If the associated pattern is isotropic, add a circular ring of radius 20 km
-        if (isIsotropic)
-        {
-            double circle_radius = 20; // Radius in km
-            int num_points = 100;      // Number of points to form the circle
+    // If the associated pattern is isotropic, add a circular ring of radius 20 km
+    if (isIsotropic)
+    {
+        double circle_radius = 20; // Radius in km
+        int num_points = 100;      // Number of points to form the circle
 
-            kmlFile << "<Placemark>\n";
-            kmlFile << "    <name>Isotropic pattern range</name>\n";
-            kmlFile << "    <styleUrl>#translucentPolygon</styleUrl>\n";
-            std::vector<std::pair<double, double>> circle_coordinates = generate_circle_coordinates(latitude, longitude, circle_radius, num_points);
-            kmlFile << "    <Polygon>\n";
-            kmlFile << "        <extrude>1</extrude>\n";
-            kmlFile << "        <altitudeMode>relativeToGround</altitudeMode>\n";
-            kmlFile << "        <outerBoundaryIs>\n";
-            kmlFile << "            <LinearRing>\n";
-            kmlFile << "                <coordinates>\n";
-
-            for (const auto &coord : circle_coordinates)
-            {
-                kmlFile << "                    " << coord.second << "," << coord.first << "," << altitudeAboveGround << "\n";
-            }
-            // Close the circle by repeating the first point
-            kmlFile << "                    " << circle_coordinates[0].second << "," << circle_coordinates[0].first << "," << altitudeAboveGround << "\n";
-
-            kmlFile << "                </coordinates>\n";
-            kmlFile << "            </LinearRing>\n";
-            kmlFile << "        </outerBoundaryIs>\n";
-            kmlFile << "    </Polygon>\n";
-            kmlFile << "</Placemark>\n";
-        }
-        else if (!isIsotropic && (element->getElementsByTagName(transmitterTag)->getLength() > 0 || element->getElementsByTagName(receiverTag)->getLength() > 0))
-        {
-            // Extract necessary values
-            const XMLCh *startAzimuthTag = XMLString::transcode("startazimuth");
-            const XMLCh *positionWaypointTag = XMLString::transcode("positionwaypoint");
-
-            double startAzimuth = std::stod(XMLString::transcode(element->getElementsByTagName(startAzimuthTag)->item(0)->getTextContent()));
-            const DOMElement *positionWaypointElement = dynamic_cast<DOMElement *>(element->getElementsByTagName(positionWaypointTag)->item(0));
-
-            // Convert positionWaypoint to coordinates
-            std::string coordinates = getCoordinatesFromPositionWaypoint(positionWaypointElement, referenceLatitude, referenceLongitude, referenceAltitude);
-
-            // Calculate end coordinates
-            double arrowLength = 20000; // Adjust this value according to the desired length of the arrow
-
-            // Parse coordinates from the positionWaypoint
-            double startLatitude, startLongitude, startAltitude;
-            std::istringstream coordinatesStream(coordinates);
-            coordinatesStream >> startLongitude;
-            coordinatesStream.ignore(1); // skip the comma
-            coordinatesStream >> startLatitude;
-            coordinatesStream.ignore(1); // skip the comma
-            coordinatesStream >> startAltitude;
-
-            // Adjust startAzimuth to make 0 degrees point East
-            startAzimuth = startAzimuth + 180;
-
-            // Calculate end coordinates
-            double destLatitude, destLongitude;
-            calculateDestinationCoordinate(startLatitude, startLongitude, startAzimuth, arrowLength, destLatitude, destLongitude);
-
-            std::stringstream endCoordinatesStream;
-            endCoordinatesStream << std::fixed << std::setprecision(6) << destLongitude << "," << destLatitude << "," << startAltitude;
-            std::string endCoordinates = endCoordinatesStream.str();
-
-            // Define values for testing
-            // double alpha = 1;
-            // double beta = 2;
-            // double gamma = 3.6;
-
-            // Extract the antenna element with pattern="sinc"
-            const DOMElement *sincAntennaElement = getAntennaElementWithSincPattern(document->getDocumentElement());
-
-            // Extract alpha, beta, and gamma values if the antenna element was found
-            if (sincAntennaElement != nullptr)
-            {
-                double alpha = std::stod(XMLString::transcode(sincAntennaElement->getElementsByTagName(alphaTag)->item(0)->getTextContent()));
-                double beta = std::stod(XMLString::transcode(sincAntennaElement->getElementsByTagName(betaTag)->item(0)->getTextContent()));
-                double gamma = std::stod(XMLString::transcode(sincAntennaElement->getElementsByTagName(gammaTag)->item(0)->getTextContent()));
-
-                double angle_3dB_drop_deg = find_3db_drop_angle(alpha, beta, gamma);
-
-                // Calculate end coordinates for both side lines
-                double sideLine1Azimuth = startAzimuth - angle_3dB_drop_deg;
-                double sideLine2Azimuth = startAzimuth + angle_3dB_drop_deg;
-                double sideLine1DestLatitude, sideLine1DestLongitude;
-                double sideLine2DestLatitude, sideLine2DestLongitude;
-
-                calculateDestinationCoordinate(startLatitude, startLongitude, sideLine1Azimuth, arrowLength, sideLine1DestLatitude, sideLine1DestLongitude);
-                calculateDestinationCoordinate(startLatitude, startLongitude, sideLine2Azimuth, arrowLength, sideLine2DestLatitude, sideLine2DestLongitude);
-
-                std::stringstream sideLine1EndCoordinatesStream, sideLine2EndCoordinatesStream;
-                sideLine1EndCoordinatesStream << std::fixed << std::setprecision(6) << sideLine1DestLongitude << "," << sideLine1DestLatitude << "," << startAltitude;
-                sideLine2EndCoordinatesStream << std::fixed << std::setprecision(6) << sideLine2DestLongitude << "," << sideLine2DestLatitude << "," << startAltitude;
-                std::string sideLine1EndCoordinates = sideLine1EndCoordinatesStream.str();
-                std::string sideLine2EndCoordinates = sideLine2EndCoordinatesStream.str();
-
-                // Add placemarks for side lines
-                for (int i = 1; i <= 2; ++i)
-                {
-                    std::string sideLineName = "Antenna Side Line " + std::to_string(i);
-                    std::string sideLineEndCoordinates = (i == 1) ? sideLine1EndCoordinates : sideLine2EndCoordinates;
-
-                    kmlFile << "<Placemark>\n";
-                    kmlFile << "      <name>" << sideLineName << "</name>\n";
-                    kmlFile << "      <styleUrl>#lineStyleBlue</styleUrl>\n";
-                    kmlFile << "      <LineString>\n";
-                    kmlFile << "            <tessellate>1</tessellate>\n";
-                    kmlFile << "            <coordinates>\n";
-                    kmlFile << "            " + coordinates + " " + sideLineEndCoordinates + "\n";
-                    kmlFile << "            </coordinates>\n";
-                    kmlFile << "      </LineString>\n";
-                    kmlFile << "</Placemark>\n";
-                }
-            }
-            else
-            {
-                std::cerr << "Error: Antenna element with pattern='sinc' not found in the XML file" << std::endl;
-            }
-
-            kmlFile << "<Placemark>\n";
-            kmlFile << "      <name>Antenna Direction</name>\n";
-            kmlFile << "      <styleUrl>#lineStyle</styleUrl>\n";
-            kmlFile << "      <LineString>\n";
-            kmlFile << "            <tessellate>1</tessellate>\n";
-            kmlFile << "            <coordinates>\n";
-            kmlFile << "            " + coordinates + " " + endCoordinates + "\n";
-            kmlFile << "            </coordinates>\n";
-            kmlFile << "      </LineString>\n";
-            kmlFile << "</Placemark>\n";
-
-            kmlFile << "<Placemark>\n";
-            kmlFile << "      <name>Antenna Arrow</name>\n";
-            kmlFile << "      <styleUrl>#arrowStyle</styleUrl>\n";
-            kmlFile << "      <Point>\n";
-            kmlFile << "          <coordinates>" + endCoordinates + "</coordinates>\n";
-            kmlFile << "      </Point>\n";
-            kmlFile << "      <IconStyle>\n";
-            kmlFile << "          <heading>" << startAzimuth << "</heading>\n";
-            kmlFile << "      </IconStyle>\n";
-            kmlFile << "</Placemark>\n";
-        }
-
-        // Write the placemark data to the KML file
         kmlFile << "<Placemark>\n";
-        kmlFile << "    <name>" << XMLString::transcode(element->getAttribute(XMLString::transcode("name"))) << "</name>\n";
-        kmlFile << "    <description>" << XMLString::transcode(element->getAttribute(XMLString::transcode("description"))) << "</description>\n";
+        kmlFile << "    <name>Isotropic pattern range</name>\n";
+        kmlFile << "    <styleUrl>#translucentPolygon</styleUrl>\n";
+        std::vector<std::pair<double, double>> circle_coordinates = generate_circle_coordinates(latitude, longitude, circle_radius, num_points);
+        kmlFile << "    <Polygon>\n";
+        kmlFile << "        <extrude>1</extrude>\n";
+        kmlFile << "        <altitudeMode>relativeToGround</altitudeMode>\n";
+        kmlFile << "        <outerBoundaryIs>\n";
+        kmlFile << "            <LinearRing>\n";
+        kmlFile << "                <coordinates>\n";
 
-        if (element->getElementsByTagName(receiverTag)->getLength() > 0)
+        for (const auto &coord : circle_coordinates)
         {
-            kmlFile << "    <styleUrl>#receiver</styleUrl>\n";
+            kmlFile << "                    " << coord.second << "," << coord.first << "," << altitudeAboveGround << "\n";
         }
-        else if (element->getElementsByTagName(transmitterTag)->getLength() > 0)
-        {
-            kmlFile << "    <styleUrl>#transmitter</styleUrl>\n";
-        }
-        else if (element->getElementsByTagName(targetTag)->getLength() > 0)
-        {
-            kmlFile << "    <styleUrl>#target</styleUrl>\n";
-        }
+        // Close the circle by repeating the first point
+        kmlFile << "                    " << circle_coordinates[0].second << "," << circle_coordinates[0].first << "," << altitudeAboveGround << "\n";
 
-        // If the interpolation is linear, hyperbolic or exponential, use the gx:Track element
-        if (isLinear || isHyperbolic || isCubic)
+        kmlFile << "                </coordinates>\n";
+        kmlFile << "            </LinearRing>\n";
+        kmlFile << "        </outerBoundaryIs>\n";
+        kmlFile << "    </Polygon>\n";
+        kmlFile << "</Placemark>\n";
+    }
+    else if (!isIsotropic && (element->getElementsByTagName(transmitterTag)->getLength() > 0 || element->getElementsByTagName(receiverTag)->getLength() > 0))
+    {
+        // Extract necessary values
+        const XMLCh *startAzimuthTag = XMLString::transcode("startazimuth");
+        const XMLCh *positionWaypointTag = XMLString::transcode("positionwaypoint");
+
+        double startAzimuth = std::stod(XMLString::transcode(element->getElementsByTagName(startAzimuthTag)->item(0)->getTextContent()));
+        const DOMElement *positionWaypointElement = dynamic_cast<DOMElement *>(element->getElementsByTagName(positionWaypointTag)->item(0));
+
+        // Convert positionWaypoint to coordinates
+        std::string coordinates = getCoordinatesFromPositionWaypoint(positionWaypointElement, referenceLatitude, referenceLongitude, referenceAltitude);
+
+        // Calculate end coordinates
+        double arrowLength = 20000; // Adjust this value according to the desired length of the arrow
+
+        // Parse coordinates from the positionWaypoint
+        double startLatitude, startLongitude, startAltitude;
+        std::istringstream coordinatesStream(coordinates);
+        coordinatesStream >> startLongitude;
+        coordinatesStream.ignore(1); // skip the comma
+        coordinatesStream >> startLatitude;
+        coordinatesStream.ignore(1); // skip the comma
+        coordinatesStream >> startAltitude;
+
+        // Adjust startAzimuth to make 0 degrees point East
+        startAzimuth = startAzimuth + 180;
+
+        // Calculate end coordinates
+        double destLatitude, destLongitude;
+        calculateDestinationCoordinate(startLatitude, startLongitude, startAzimuth, arrowLength, destLatitude, destLongitude);
+
+        std::stringstream endCoordinatesStream;
+        endCoordinatesStream << std::fixed << std::setprecision(6) << destLongitude << "," << destLatitude << "," << startAltitude;
+        std::string endCoordinates = endCoordinatesStream.str();
+
+        // Define values for testing
+        // double alpha = 1;
+        // double beta = 2;
+        // double gamma = 3.6;
+
+        // Extract the antenna element with pattern="sinc"
+        const DOMElement *sincAntennaElement = getAntennaElementWithSincPattern(document->getDocumentElement());
+
+        // Extract alpha, beta, and gamma values if the antenna element was found
+        if (sincAntennaElement != nullptr)
         {
-            kmlFile << "    <gx:Track>\n";
-            if (altitudeAboveGround > 0)
+            double alpha = std::stod(XMLString::transcode(sincAntennaElement->getElementsByTagName(alphaTag)->item(0)->getTextContent()));
+            double beta = std::stod(XMLString::transcode(sincAntennaElement->getElementsByTagName(betaTag)->item(0)->getTextContent()));
+            double gamma = std::stod(XMLString::transcode(sincAntennaElement->getElementsByTagName(gammaTag)->item(0)->getTextContent()));
+
+            double angle_3dB_drop_deg = find_3db_drop_angle(alpha, beta, gamma);
+
+            // Calculate end coordinates for both side lines
+            double sideLine1Azimuth = startAzimuth - angle_3dB_drop_deg;
+            double sideLine2Azimuth = startAzimuth + angle_3dB_drop_deg;
+            double sideLine1DestLatitude, sideLine1DestLongitude;
+            double sideLine2DestLatitude, sideLine2DestLongitude;
+
+            calculateDestinationCoordinate(startLatitude, startLongitude, sideLine1Azimuth, arrowLength, sideLine1DestLatitude, sideLine1DestLongitude);
+            calculateDestinationCoordinate(startLatitude, startLongitude, sideLine2Azimuth, arrowLength, sideLine2DestLatitude, sideLine2DestLongitude);
+
+            std::stringstream sideLine1EndCoordinatesStream, sideLine2EndCoordinatesStream;
+            sideLine1EndCoordinatesStream << std::fixed << std::setprecision(6) << sideLine1DestLongitude << "," << sideLine1DestLatitude << "," << startAltitude;
+            sideLine2EndCoordinatesStream << std::fixed << std::setprecision(6) << sideLine2DestLongitude << "," << sideLine2DestLatitude << "," << startAltitude;
+            std::string sideLine1EndCoordinates = sideLine1EndCoordinatesStream.str();
+            std::string sideLine2EndCoordinates = sideLine2EndCoordinatesStream.str();
+
+            // Add placemarks for side lines
+            for (int i = 1; i <= 2; ++i)
             {
-                kmlFile << "        <altitudeMode>relativeToGround</altitudeMode>\n";
-                kmlFile << "        <extrude>1</extrude>\n";
+                std::string sideLineName = "Antenna Side Line " + std::to_string(i);
+                std::string sideLineEndCoordinates = (i == 1) ? sideLine1EndCoordinates : sideLine2EndCoordinates;
+
+                kmlFile << "<Placemark>\n";
+                kmlFile << "      <name>" << sideLineName << "</name>\n";
+                kmlFile << "      <styleUrl>#lineStyleBlue</styleUrl>\n";
+                kmlFile << "      <LineString>\n";
+                kmlFile << "            <tessellate>1</tessellate>\n";
+                kmlFile << "            <coordinates>\n";
+                kmlFile << "            " + coordinates + " " + sideLineEndCoordinates + "\n";
+                kmlFile << "            </coordinates>\n";
+                kmlFile << "      </LineString>\n";
+                kmlFile << "</Placemark>\n";
             }
-            else
-            {
-                kmlFile << "        <altitudeMode>clampToGround</altitudeMode>\n";
-            }
-
-            // Iterate through the position waypoints
-            for (XMLSize_t i = 0; i < positionWaypointList->getLength(); ++i)
-            {
-                const DOMElement *positionWaypointElement = dynamic_cast<const DOMElement *>(positionWaypointList->item(i));
-
-                // Extract the position coordinates
-                double x = std::stod(XMLString::transcode(positionWaypointElement->getElementsByTagName(xTag)->item(0)->getTextContent()));
-                double y = std::stod(XMLString::transcode(positionWaypointElement->getElementsByTagName(yTag)->item(0)->getTextContent()));
-                double altitude = std::stod(XMLString::transcode(positionWaypointElement->getElementsByTagName(altitudeTag)->item(0)->getTextContent()));
-
-                // Convert the position coordinates to geographic coordinates
-                double longitude = referenceLongitude + x / (cos(referenceLatitude * M_PI / 180) * 111319.9);
-                double latitude = referenceLatitude + y / 111319.9;
-                double altitudeAboveGround = altitude - referenceAltitude;
-
-                // Extract the time value
-                const XMLCh *timeTag = XMLString::transcode("time");
-                double time = std::stod(XMLString::transcode(positionWaypointElement->getElementsByTagName(timeTag)->item(0)->getTextContent()));
-
-                // Check if interpolation is hyperbolic
-                if (isHyperbolic)
-                {
-                    // Calculate the hyperbolic path and update longitude and latitude values accordingly
-                    double a = 0.5;                                                              // Set the desired value for 'a' based on the shape of the hyperbola
-                    double b = 0.5;                                                              // Set the desired value for 'b' based on the shape of the hyperbola
-                    double t = (double)i / (positionWaypointList->getLength() - 1) * 2.0 * M_PI; // Parameter 't' varies from 0 to 2 * PI
-                    updateLongitudeLatitudeHyperbolic(longitude, latitude, t, a, b);
-                }
-
-                // Check if interpolation is cubic
-                if (isCubic && i + 1 < positionWaypointList->getLength())
-                {
-                    // Calculate time difference between two consecutive position waypoints
-                    const DOMElement *nextPositionWaypointElement = dynamic_cast<const DOMElement *>(positionWaypointList->item(i + 1));
-                    double nextTime = std::stod(XMLString::transcode(nextPositionWaypointElement->getElementsByTagName(timeTag)->item(0)->getTextContent()));
-                    double time_diff = nextTime - time;
-
-                    // Extract the position coordinates for the next waypoint
-                    double nextX = std::stod(XMLString::transcode(nextPositionWaypointElement->getElementsByTagName(xTag)->item(0)->getTextContent()));
-                    double nextY = std::stod(XMLString::transcode(nextPositionWaypointElement->getElementsByTagName(yTag)->item(0)->getTextContent()));
-                    double nextAltitude = std::stod(XMLString::transcode(nextPositionWaypointElement->getElementsByTagName(altitudeTag)->item(0)->getTextContent()));
-
-                    // Convert the position coordinates to geographic coordinates
-                    double nextLongitude = referenceLongitude + nextX / (cos(referenceLatitude * M_PI / 180) * 111319.9);
-                    double nextLatitude = referenceLatitude + nextY / 111319.9;
-                    double nextAltitudeAboveGround = nextAltitude - referenceAltitude;
-
-                    // Calculate control points for cubic interpolation
-                    double x1 = longitude;
-                    double y1 = latitude;
-                    double x4 = nextLongitude;
-                    double y4 = nextLatitude;
-                    double newX, newY;
-                    updateLongitudeLatitudeCubic(newX, newY, 0.0, x1, y1, x4, y4); // Calculate first point on cubic curve
-
-                    int num_divisions = 100;
-                    for (int j = 0; j <= num_divisions; ++j)
-                    {
-                        double t = (double)j / num_divisions;
-
-                        double newLongitude, newLatitude;
-                        updateLongitudeLatitudeCubic(newLongitude, newLatitude, t, x1, y1, x4, y4);
-
-                        double newAltitudeAboveGround = altitudeAboveGround + t * (nextAltitudeAboveGround - altitudeAboveGround);
-
-                        kmlFile << "        <when>" << time + (double)(j * time_diff) / num_divisions << "</when>\n";
-                        kmlFile << "        <gx:coord>" << newLongitude << " " << newLatitude << " " << newAltitudeAboveGround << "</gx:coord>\n";
-                    }
-                }
-
-                else
-                {
-                    // Write the time and coordinates to the gx:Track element
-                    kmlFile << "        <when>" << time << "</when>\n";
-                    kmlFile << "        <gx:coord>" << longitude << " " << latitude << " " << altitudeAboveGround << "</gx:coord>\n";
-                }
-            }
-
-            kmlFile << "    </gx:Track>\n";
         }
-
         else
         {
-            kmlFile << "    <LookAt>\n";
-            kmlFile << "        <longitude>" << longitude << "</longitude>\n";
-            kmlFile << "        <latitude>" << latitude << "</latitude>\n";
-            kmlFile << "        <altitude>" << altitudeAboveGround << "</altitude>\n";
-            kmlFile << "        <heading>-148.4122922628044</heading>\n";
-            kmlFile << "        <tilt>40.5575073395506</tilt>\n";
-            kmlFile << "        <range>500.6566641072245</range>\n";
-            kmlFile << "    </LookAt>\n";
-
-            kmlFile << "    <Point>\n";
-            kmlFile << "        <coordinates>" << longitude << "," << latitude << "," << altitudeAboveGround << "</coordinates>\n";
-
-            if (altitudeAboveGround > 0)
-            {
-                kmlFile << "        <altitudeMode>relativeToGround</altitudeMode>\n";
-                kmlFile << "        <extrude>1</extrude>\n";
-            }
-            else
-            {
-                kmlFile << "        <altitudeMode>clampToGround</altitudeMode>\n";
-            }
-
-            kmlFile << "    </Point>\n";
+            std::cerr << "Error: Antenna element with pattern='sinc' not found in the XML file" << std::endl;
         }
 
+        kmlFile << "<Placemark>\n";
+        kmlFile << "      <name>Antenna Direction</name>\n";
+        kmlFile << "      <styleUrl>#lineStyle</styleUrl>\n";
+        kmlFile << "      <LineString>\n";
+        kmlFile << "            <tessellate>1</tessellate>\n";
+        kmlFile << "            <coordinates>\n";
+        kmlFile << "            " + coordinates + " " + endCoordinates + "\n";
+        kmlFile << "            </coordinates>\n";
+        kmlFile << "      </LineString>\n";
         kmlFile << "</Placemark>\n";
 
-        if (isLinear || isHyperbolic || isCubic)
+        kmlFile << "<Placemark>\n";
+        kmlFile << "      <name>Antenna Arrow</name>\n";
+        kmlFile << "      <styleUrl>#arrowStyle</styleUrl>\n";
+        kmlFile << "      <Point>\n";
+        kmlFile << "          <coordinates>" + endCoordinates + "</coordinates>\n";
+        kmlFile << "      </Point>\n";
+        kmlFile << "      <IconStyle>\n";
+        kmlFile << "          <heading>" << startAzimuth << "</heading>\n";
+        kmlFile << "      </IconStyle>\n";
+        kmlFile << "</Placemark>\n";
+    }
+
+    // Write the placemark data to the KML file
+    kmlFile << "<Placemark>\n";
+    kmlFile << "    <name>" << XMLString::transcode(element->getAttribute(XMLString::transcode("name"))) << "</name>\n";
+    kmlFile << "    <description>" << XMLString::transcode(element->getAttribute(XMLString::transcode("description"))) << "</description>\n";
+
+    if (element->getElementsByTagName(receiverTag)->getLength() > 0)
+    {
+        kmlFile << "    <styleUrl>#receiver</styleUrl>\n";
+    }
+    else if (element->getElementsByTagName(transmitterTag)->getLength() > 0)
+    {
+        kmlFile << "    <styleUrl>#transmitter</styleUrl>\n";
+    }
+    else if (element->getElementsByTagName(targetTag)->getLength() > 0)
+    {
+        kmlFile << "    <styleUrl>#target</styleUrl>\n";
+    }
+
+    // If the interpolation is linear, hyperbolic or exponential, use the gx:Track element
+    if (isLinear || isHyperbolic || isCubic)
+    {
+        kmlFile << "    <gx:Track>\n";
+        if (altitudeAboveGround > 0)
         {
-            // Get the first and last position waypoints
-            const DOMElement *firstPositionWaypointElement = dynamic_cast<const DOMElement *>(positionWaypointList->item(0));
-            const DOMElement *lastPositionWaypointElement = dynamic_cast<const DOMElement *>(positionWaypointList->item(positionWaypointList->getLength() - 1));
-
-            // Extract the start and end coordinates
-            std::string startCoordinates = getCoordinatesFromPositionWaypoint(firstPositionWaypointElement, referenceLatitude, referenceLongitude, referenceAltitude);
-            std::string endCoordinates = getCoordinatesFromPositionWaypoint(lastPositionWaypointElement, referenceLatitude, referenceLongitude, referenceAltitude);
-
-            // Start point placemark
-            kmlFile << "<Placemark>\n";
-            kmlFile << "    <name>Start: " << XMLString::transcode(element->getAttribute(XMLString::transcode("name"))) << "</name>\n";
-            kmlFile << "    <styleUrl>#target</styleUrl>\n"; // Replace with your desired style URL for the start icon
-            kmlFile << "    <Point>\n";
-            kmlFile << "        <coordinates>" << startCoordinates << "</coordinates>\n";
-            if (altitudeAboveGround > 0)
-            {
-                kmlFile << "        <altitudeMode>relativeToGround</altitudeMode>\n";
-                kmlFile << "        <extrude>1</extrude>\n";
-            }
-            else
-            {
-                kmlFile << "        <altitudeMode>clampToGround</altitudeMode>\n";
-            }
-            kmlFile << "    </Point>\n";
-            kmlFile << "</Placemark>\n";
-
-            // End point placemark
-            kmlFile << "<Placemark>\n";
-            kmlFile << "    <name>End: " << XMLString::transcode(element->getAttribute(XMLString::transcode("name"))) << "</name>\n";
-            kmlFile << "    <styleUrl>#target</styleUrl>\n"; // Replace with your desired style URL for the end icon
-            kmlFile << "    <Point>\n";
-            kmlFile << "        <coordinates>" << endCoordinates << "</coordinates>\n";
-            if (altitudeAboveGround > 0)
-            {
-                kmlFile << "        <altitudeMode>relativeToGround</altitudeMode>\n";
-                kmlFile << "        <extrude>1</extrude>\n";
-            }
-            else
-            {
-                kmlFile << "        <altitudeMode>clampToGround</altitudeMode>\n";
-            }
-            kmlFile << "    </Point>\n";
-            kmlFile << "</Placemark>\n";
+            kmlFile << "        <altitudeMode>relativeToGround</altitudeMode>\n";
+            kmlFile << "        <extrude>1</extrude>\n";
         }
+        else
+        {
+            kmlFile << "        <altitudeMode>clampToGround</altitudeMode>\n";
+        }
+
+        // Iterate through the position waypoints
+        for (XMLSize_t i = 0; i < positionWaypointList->getLength(); ++i)
+        {
+            const DOMElement *positionWaypointElement = dynamic_cast<const DOMElement *>(positionWaypointList->item(i));
+
+            // Extract the position coordinates
+            double x = std::stod(XMLString::transcode(positionWaypointElement->getElementsByTagName(xTag)->item(0)->getTextContent()));
+            double y = std::stod(XMLString::transcode(positionWaypointElement->getElementsByTagName(yTag)->item(0)->getTextContent()));
+            double altitude = std::stod(XMLString::transcode(positionWaypointElement->getElementsByTagName(altitudeTag)->item(0)->getTextContent()));
+
+            // Convert the position coordinates to geographic coordinates
+            double longitude = referenceLongitude + x / (cos(referenceLatitude * M_PI / 180) * 111319.9);
+            double latitude = referenceLatitude + y / 111319.9;
+            double altitudeAboveGround = altitude - referenceAltitude;
+
+            // Extract the time value
+            const XMLCh *timeTag = XMLString::transcode("time");
+            double time = std::stod(XMLString::transcode(positionWaypointElement->getElementsByTagName(timeTag)->item(0)->getTextContent()));
+
+            // Check if interpolation is hyperbolic
+            if (isHyperbolic)
+            {
+                // Calculate the hyperbolic path and update longitude and latitude values accordingly
+                double a = 0.5;                                                              // Set the desired value for 'a' based on the shape of the hyperbola
+                double b = 0.5;                                                              // Set the desired value for 'b' based on the shape of the hyperbola
+                double t = (double)i / (positionWaypointList->getLength() - 1) * 2.0 * M_PI; // Parameter 't' varies from 0 to 2 * PI
+                updateLongitudeLatitudeHyperbolic(longitude, latitude, t, a, b);
+            }
+
+            // Check if interpolation is cubic
+            if (isCubic && i + 1 < positionWaypointList->getLength())
+            {
+                // Calculate time difference between two consecutive position waypoints
+                const DOMElement *nextPositionWaypointElement = dynamic_cast<const DOMElement *>(positionWaypointList->item(i + 1));
+                double nextTime = std::stod(XMLString::transcode(nextPositionWaypointElement->getElementsByTagName(timeTag)->item(0)->getTextContent()));
+                double time_diff = nextTime - time;
+
+                // Extract the position coordinates for the next waypoint
+                double nextX = std::stod(XMLString::transcode(nextPositionWaypointElement->getElementsByTagName(xTag)->item(0)->getTextContent()));
+                double nextY = std::stod(XMLString::transcode(nextPositionWaypointElement->getElementsByTagName(yTag)->item(0)->getTextContent()));
+                double nextAltitude = std::stod(XMLString::transcode(nextPositionWaypointElement->getElementsByTagName(altitudeTag)->item(0)->getTextContent()));
+
+                // Convert the position coordinates to geographic coordinates
+                double nextLongitude = referenceLongitude + nextX / (cos(referenceLatitude * M_PI / 180) * 111319.9);
+                double nextLatitude = referenceLatitude + nextY / 111319.9;
+                double nextAltitudeAboveGround = nextAltitude - referenceAltitude;
+
+                // Calculate control points for cubic interpolation
+                double x1 = longitude;
+                double y1 = latitude;
+                double x4 = nextLongitude;
+                double y4 = nextLatitude;
+                double newX, newY;
+                updateLongitudeLatitudeCubic(newX, newY, 0.0, x1, y1, x4, y4); // Calculate first point on cubic curve
+
+                int num_divisions = 100;
+                for (int j = 0; j <= num_divisions; ++j)
+                {
+                    double t = (double)j / num_divisions;
+
+                    double newLongitude, newLatitude;
+                    updateLongitudeLatitudeCubic(newLongitude, newLatitude, t, x1, y1, x4, y4);
+
+                    double newAltitudeAboveGround = altitudeAboveGround + t * (nextAltitudeAboveGround - altitudeAboveGround);
+
+                    kmlFile << "        <when>" << time + (double)(j * time_diff) / num_divisions << "</when>\n";
+                    kmlFile << "        <gx:coord>" << newLongitude << " " << newLatitude << " " << newAltitudeAboveGround << "</gx:coord>\n";
+                }
+            }
+
+            else
+            {
+                // Write the time and coordinates to the gx:Track element
+                kmlFile << "        <when>" << time << "</when>\n";
+                kmlFile << "        <gx:coord>" << longitude << " " << latitude << " " << altitudeAboveGround << "</gx:coord>\n";
+            }
+        }
+
+        kmlFile << "    </gx:Track>\n";
+    }
+
+    else
+    {
+        kmlFile << "    <LookAt>\n";
+        kmlFile << "        <longitude>" << longitude << "</longitude>\n";
+        kmlFile << "        <latitude>" << latitude << "</latitude>\n";
+        kmlFile << "        <altitude>" << altitudeAboveGround << "</altitude>\n";
+        kmlFile << "        <heading>-148.4122922628044</heading>\n";
+        kmlFile << "        <tilt>40.5575073395506</tilt>\n";
+        kmlFile << "        <range>500.6566641072245</range>\n";
+        kmlFile << "    </LookAt>\n";
+
+        kmlFile << "    <Point>\n";
+        kmlFile << "        <coordinates>" << longitude << "," << latitude << "," << altitudeAboveGround << "</coordinates>\n";
+
+        if (altitudeAboveGround > 0)
+        {
+            kmlFile << "        <altitudeMode>relativeToGround</altitudeMode>\n";
+            kmlFile << "        <extrude>1</extrude>\n";
+        }
+        else
+        {
+            kmlFile << "        <altitudeMode>clampToGround</altitudeMode>\n";
+        }
+
+        kmlFile << "    </Point>\n";
+    }
+
+    kmlFile << "</Placemark>\n";
+
+    if (isLinear || isHyperbolic || isCubic)
+    {
+        // Get the first and last position waypoints
+        const DOMElement *firstPositionWaypointElement = dynamic_cast<const DOMElement *>(positionWaypointList->item(0));
+        const DOMElement *lastPositionWaypointElement = dynamic_cast<const DOMElement *>(positionWaypointList->item(positionWaypointList->getLength() - 1));
+
+        // Extract the start and end coordinates
+        std::string startCoordinates = getCoordinatesFromPositionWaypoint(firstPositionWaypointElement, referenceLatitude, referenceLongitude, referenceAltitude);
+        std::string endCoordinates = getCoordinatesFromPositionWaypoint(lastPositionWaypointElement, referenceLatitude, referenceLongitude, referenceAltitude);
+
+        // Start point placemark
+        kmlFile << "<Placemark>\n";
+        kmlFile << "    <name>Start: " << XMLString::transcode(element->getAttribute(XMLString::transcode("name"))) << "</name>\n";
+        kmlFile << "    <styleUrl>#target</styleUrl>\n"; // Replace with your desired style URL for the start icon
+        kmlFile << "    <Point>\n";
+        kmlFile << "        <coordinates>" << startCoordinates << "</coordinates>\n";
+        if (altitudeAboveGround > 0)
+        {
+            kmlFile << "        <altitudeMode>relativeToGround</altitudeMode>\n";
+            kmlFile << "        <extrude>1</extrude>\n";
+        }
+        else
+        {
+            kmlFile << "        <altitudeMode>clampToGround</altitudeMode>\n";
+        }
+        kmlFile << "    </Point>\n";
+        kmlFile << "</Placemark>\n";
+
+        // End point placemark
+        kmlFile << "<Placemark>\n";
+        kmlFile << "    <name>End: " << XMLString::transcode(element->getAttribute(XMLString::transcode("name"))) << "</name>\n";
+        kmlFile << "    <styleUrl>#target</styleUrl>\n"; // Replace with your desired style URL for the end icon
+        kmlFile << "    <Point>\n";
+        kmlFile << "        <coordinates>" << endCoordinates << "</coordinates>\n";
+        if (altitudeAboveGround > 0)
+        {
+            kmlFile << "        <altitudeMode>relativeToGround</altitudeMode>\n";
+            kmlFile << "        <extrude>1</extrude>\n";
+        }
+        else
+        {
+            kmlFile << "        <altitudeMode>clampToGround</altitudeMode>\n";
+        }
+        kmlFile << "    </Point>\n";
+        kmlFile << "</Placemark>\n";
     }
 }
 
