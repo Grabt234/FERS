@@ -149,7 +149,7 @@ class SimulationConfiguration:
         ET.SubElement(ant, 'gamma').text = str(gamma)
         ET.SubElement(ant, 'efficiency').text = str(efficiency)
     
-    def create_static_isotropic_target_platform(self, platform_name, target_name, rcs, x, y, z, boresight_azimuth, boresight_elevation):
+    def create_static_isotropic_target_platform(self, platform_name, target_name, rcs, x, y, z):
         """Define an isotropic radiator
 
         Args:
@@ -167,8 +167,8 @@ class SimulationConfiguration:
         ET.SubElement(position_waypoint, 'time').text = str(0.000001)
 
         fixedrotation = ET.SubElement(platform, "fixedrotation")
-        ET.SubElement(fixedrotation, 'startazimuth').text = str(boresight_azimuth)
-        ET.SubElement(fixedrotation, 'startelevation').text = str(boresight_elevation)
+        ET.SubElement(fixedrotation, 'startazimuth').text = str(0)
+        ET.SubElement(fixedrotation, 'startelevation').text = str(0)
         ET.SubElement(fixedrotation, 'azimuthrate').text = str(0)
         ET.SubElement(fixedrotation, 'elevationrate').text = str(0)
 
@@ -229,3 +229,14 @@ class SimulationConfiguration:
             f.write(self.dtd.encode('utf-8'))
             tree = ET.ElementTree(self.simulation)
             tree.write(f)
+
+# only contains single reflector
+class SimpleStaticTargetPlatform:
+    def __init__(self, platform_name, target_name, x, y, z, t, rcs):
+        self.platform_name = platform_name
+        self.target_name = target_name
+        self.x = x
+        self.y = y
+        self.z = z
+        self.t = t
+        self.rcs = rcs
