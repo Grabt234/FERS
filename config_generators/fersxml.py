@@ -1,5 +1,30 @@
 import xml.etree.ElementTree as ET
 
+class SignalGenerator:
+
+    def generate_chirp(ramp_period, sample_rate, bandwidth, init_freq=0, tau=0, phi=0):
+        """Generate an analytic baseband chirp.
+
+        Args:
+            ramp_period (float): Ramp period of chirp (seconds)
+            sample_rate (uint): Sample rate used to generate chirp (Hz)
+            bandwidth (uint): Bandwidth of chirp (Hz)
+            init_freq (int, optional): Start frequency (Hz). Defaults to 0.
+            tau (int, optional): Sweep offset (s). Defaults to 0.
+            phi (int, optional): Phase offset (rad). Defaults to 0.
+
+        Returns:
+            nnp.array: chirp data array
+        """
+
+        import numpy as np
+
+        ns_chirp = int(np.ceil(ramp_period*sample_rate))
+        t_chirp = np.linspace(-ramp_period/2, ramp_period/2, ns_chirp, endpoint=False)
+
+
+        return np.exp(1.j*(np.pi*bandwidth/(2*max(t_chirp))*pow((t_chirp - tau), 2) + 2*np.pi*init_freq*(t_chirp - tau) + phi))
+        
 class SimulationConfiguration:
     def __init__(self, name):
         """_summary_
