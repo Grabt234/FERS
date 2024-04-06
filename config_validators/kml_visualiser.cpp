@@ -393,8 +393,8 @@ bool processPlatformElement(const DOMElement *element, std::ofstream &kmlFile, d
     // If the associated pattern is isotropic, add a circular ring of radius 20 km
     if (bIsIsotropicPattern)
     {
-        double dCircleRadius = 20; // Radius in km
-        int iNumPoints = 100;      // Number of points to form the circle
+        double dCircleRadius = 2; // Radius in km
+        int iNumPoints = 100;     // Number of points to form the circle
         AddIsotropicRadionPatternToKML(kmlFile, dLatitude, dLongitude, dAltitudeAboveGround, dCircleRadius, iNumPoints);
     }
     else if (bIsSincPattern)
