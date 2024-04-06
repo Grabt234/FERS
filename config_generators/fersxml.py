@@ -252,6 +252,39 @@ class SimulationConfiguration:
         ET.SubElement(receiver, 'prf').text = str(prf)
         ET.SubElement(receiver, 'noise_temp').text = str(noise_temp)
 
+    def create_moving_receiver_platform(self, platform_name, receiver_name, antenna, timing, nodirect, nopropagationloss, window_skip, window_length, prf, noise_temp, x, y, z,t, boresight_azimuth, boresight_elevation):
+        """Define a reciever with specified clock and antenna
+
+        Args:
+            name (string): name of the receiver
+            antenna (string): name of timing source as previously defined
+            timing (string): name of timing source as previously defined
+            nodirect (string): "true" or "false" if direct path signal is ignored
+            nopropagationloss (string): "true" or "false" causes propagation loss to be ignored
+            window_skip (string): Time to skip after start of pulse before starting receiving (seconds)
+            window_length (string): Length of the range gate (seconds)
+            prf (string): 1/window_length
+            noise_temp (string): Noise temperature of the receiver
+        """
+
+        platform = ET.SubElement(self.simulation, "platform", name=platform_name)
+
+        motion_path = ET.SubElement(platform, "motionpath",interpolation="linear")
+        for i in range(len(x)):
+            self.__add_waypoint(motion_path, x[i], y[i], z[i], t[i])
+
+        fixedrotation = ET.SubElement(platform, "fixedrotation")
+        ET.SubElement(fixedrotation, 'startazimuth').text = str(boresight_azimuth)
+        ET.SubElement(fixedrotation, 'startelevation').text = str(boresight_elevation)
+        ET.SubElement(fixedrotation, 'azimuthrate').text = str(0)
+        ET.SubElement(fixedrotation, 'elevationrate').text = str(0)
+
+        receiver = ET.SubElement(platform, "receiver", name=receiver_name, antenna=antenna, timing=timing, nodirect=nodirect, nopropagationloss=nopropagationloss)
+        ET.SubElement(receiver, 'window_skip').text = str(window_skip)
+        ET.SubElement(receiver, 'window_length').text = str(window_length)
+        ET.SubElement(receiver, 'prf').text = str(prf)
+        ET.SubElement(receiver, 'noise_temp').text = str(noise_temp)
+
     def create_static_transmitter_platform(self, platform_name, transmitter_name,pulse_name, antenna, timing, type, prf, x, y, z, boresight_azimuth, boresight_elevation):
         """_summary_
 
@@ -278,6 +311,39 @@ class SimulationConfiguration:
         ET.SubElement(position_waypoint, 'y').text = str(y)
         ET.SubElement(position_waypoint, 'altitude').text = str(z)
         ET.SubElement(position_waypoint, 'time').text = str(0.000001)
+
+        fixedrotation = ET.SubElement(platform, "fixedrotation")
+        ET.SubElement(fixedrotation, 'startazimuth').text = str(boresight_azimuth)
+        ET.SubElement(fixedrotation, 'startelevation').text = str(boresight_elevation)
+        ET.SubElement(fixedrotation, 'azimuthrate').text = str(0)
+        ET.SubElement(fixedrotation, 'elevationrate').text = str(0)
+
+        receiver = ET.SubElement(platform, "transmitter", name=transmitter_name, type=type, antenna=antenna, timing=timing, pulse=pulse_name)
+        ET.SubElement(receiver, 'prf').text = str(prf)
+
+    def create_moving_transmitter_platform(self, platform_name, transmitter_name,pulse_name, antenna, timing, type, prf, x, y, z,t, boresight_azimuth, boresight_elevation):
+        """_summary_
+
+        Args:
+            platform_name (_type_): _description_
+            receiver_name (_type_): _description_
+            antenna (_type_): _description_
+            timing (_type_): _description_
+            type (_type_): 'pulsed' or ;'continuous'
+            nopropagationloss (_type_): _description_
+            prf (_type_): _description_
+            x (_type_): _description_
+            y (_type_): _description_
+            z (_type_): _description_
+            boresight_azimuth (_type_): _description_
+            boresight_elevation (_type_): _description_
+        """
+
+        platform = ET.SubElement(self.simulation, "platform", name=platform_name)
+
+        motion_path = ET.SubElement(platform, "motionpath",interpolation="linear")
+        for i in range(len(x)):
+            self.__add_waypoint(motion_path, x[i], y[i], z[i], t[i])
 
         fixedrotation = ET.SubElement(platform, "fixedrotation")
         ET.SubElement(fixedrotation, 'startazimuth').text = str(boresight_azimuth)
