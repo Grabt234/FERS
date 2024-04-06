@@ -252,6 +252,42 @@ class SimulationConfiguration:
         ET.SubElement(receiver, 'prf').text = str(prf)
         ET.SubElement(receiver, 'noise_temp').text = str(noise_temp)
 
+    def create_static_transmitter_platform(self, platform_name, transmitter_name,pulse_name, antenna, timing, type, prf, x, y, z, boresight_azimuth, boresight_elevation):
+        """_summary_
+
+        Args:
+            platform_name (_type_): _description_
+            receiver_name (_type_): _description_
+            antenna (_type_): _description_
+            timing (_type_): _description_
+            type (_type_): 'pulsed' or ;'continuous'
+            nopropagationloss (_type_): _description_
+            prf (_type_): _description_
+            x (_type_): _description_
+            y (_type_): _description_
+            z (_type_): _description_
+            boresight_azimuth (_type_): _description_
+            boresight_elevation (_type_): _description_
+        """
+
+        platform = ET.SubElement(self.simulation, "platform", name=platform_name)
+
+        motion_path = ET.SubElement(platform, "motionpath",interpolation="linear")
+        position_waypoint = ET.SubElement(motion_path, "positionwaypoint")
+        ET.SubElement(position_waypoint, 'x').text = str(x)
+        ET.SubElement(position_waypoint, 'y').text = str(y)
+        ET.SubElement(position_waypoint, 'altitude').text = str(z)
+        ET.SubElement(position_waypoint, 'time').text = str(0.000001)
+
+        fixedrotation = ET.SubElement(platform, "fixedrotation")
+        ET.SubElement(fixedrotation, 'startazimuth').text = str(boresight_azimuth)
+        ET.SubElement(fixedrotation, 'startelevation').text = str(boresight_elevation)
+        ET.SubElement(fixedrotation, 'azimuthrate').text = str(0)
+        ET.SubElement(fixedrotation, 'elevationrate').text = str(0)
+
+        receiver = ET.SubElement(platform, "transmitter", name=transmitter_name, type=type, antenna=antenna, timing=timing, pulse=pulse_name)
+        ET.SubElement(receiver, 'prf').text = str(prf)
+
     def set_export_options(self, xml="true", csv="true", binary="false", csvbinary="false"):
         export = ET.SubElement(self.parameters, 'export', xml=xml, csv=csv, binary=binary, csvbinary=csvbinary)
 
