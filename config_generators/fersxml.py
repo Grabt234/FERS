@@ -464,9 +464,17 @@ class SimulationConfiguration:
         import xml.dom.minidom
         import xml.etree.ElementTree as ET
 
-        xml_string = ET.tostring(self.simulation, encoding='utf-8', xml_declaration=True)
+        xml_string = ET.tostring(self.simulation, encoding='utf-8')
+        
         dom = xml.dom.minidom.parseString(xml_string)
         pretty_xml = dom.toprettyxml(indent="  ")
+
+        # Split the string into lines
+        lines = pretty_xml.split('\n')
+        # Remove the first line
+        lines.pop(0)
+        # Join the remaining lines back together
+        pretty_xml = '\n'.join(lines)
 
         with open(file_path, "wb") as f:
             f.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n".encode('utf-8'))

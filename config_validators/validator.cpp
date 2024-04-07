@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
                 printUsage(argv[0]);
                 return 0;
             }
-            else if (arg == "-c" || arg == "--config")
+            else if (arg == "-p" || arg == "--path")
             {
                 strFilePath = argv[++i];
                 std::cout << "ferxml path set to: " << strFilePath << std::endl;
