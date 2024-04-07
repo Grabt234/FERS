@@ -459,12 +459,19 @@ class SimulationConfiguration:
         self.dtd = doctype_declaration = "<!DOCTYPE simulation SYSTEM \""+name+"\" >"
 
     def write_to_file(self, file_path):
-        # Write the XML tree to a file with the DOCTYPE declaration
+        
+        # Parse the XML string
+        import xml.dom.minidom
+        import xml.etree.ElementTree as ET
+
+        xml_string = ET.tostring(self.simulation, encoding='utf-8', xml_declaration=True)
+        dom = xml.dom.minidom.parseString(xml_string)
+        pretty_xml = dom.toprettyxml(indent="  ")
+
         with open(file_path, "wb") as f:
             f.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n".encode('utf-8'))
             f.write(self.dtd.encode('utf-8'))
-            tree = ET.ElementTree(self.simulation)
-            tree.write(f)
+            f.write(pretty_xml.encode('utf-8'))
 
 # only contains single reflector
 class SimpleStaticIsotropicTargetPlatform:
