@@ -36,8 +36,8 @@ class SignalGenerator:
         import os as os
 
         _, file_extension = os.path.splitext(file_name)
-        if file_extension != ".hdf5":
-            file_name = file_name + ".hdf5"
+        if file_extension != ".h5":
+            file_name = file_name + ".h5"
 
         import h5py
         import numpy as np
