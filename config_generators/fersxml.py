@@ -29,8 +29,8 @@ class SignalGenerator:
         """Write IQ data to an HDF5 file.
 
         Args:
-            IQ_data (_type_): _description_
-            filename (_type_): _description_
+            IQ_data (np.array): numpy array of complex data
+            filename (string): name file written file
         """
 
         import os as os
@@ -52,10 +52,10 @@ class SignalGenerator:
         """ Read IQ data from an HDF5 file.
 
         Args:
-            filename (_type_): _description_
+            filename (string): path to .h5 file to read in 
 
         Returns:
-            _type_: _description_
+            np.array: Array of complex IQ data
         """
 
         import os
@@ -97,7 +97,7 @@ class SignalGenerator:
         
 class SimulationConfiguration:
     def __init__(self, name):
-        """_summary_
+        """Object to store simulation description
 
         Args:
             name (string): name of the fers simulation
@@ -118,10 +118,10 @@ class SimulationConfiguration:
         Args:
             start_time (string): time when recording of simulation starts
             end_time (string): End time of simulation
-            propogation_speed (string): Start time of simulation
-            interprate (string):  Position interpolation rate for CW
-            sample_rate (string): Override the rendering sample rate with the specified one (Hz)
-            adc_seed (string): Formats to export
+            propogation_speed (string): Speed of propogation of waves
+            interprate (string):  
+            sample_rate (string): 
+            adc_seed (string): ADC bits used to simulate recorded signals
         """
 
         param = ET.SubElement(self.parameters, 'starttime')
@@ -146,8 +146,6 @@ class SimulationConfiguration:
 
     def define_pulse(self, name, filename, length, power, carrier):
         """Define a pulse
-
-            note: rate parameter is left default as its function is unclear
 
         Args:
             name (string): Name of the pulse to be references in other parts of simulation
@@ -235,7 +233,7 @@ class SimulationConfiguration:
         """Define antenna
 
         Args:
-            TODO
+            TODO: dont know how this works :)
         """
 
         ant = ET.SubElement(self.simulation, "antenna", pattern='sinc', name=name)
@@ -245,11 +243,15 @@ class SimulationConfiguration:
         ET.SubElement(ant, 'efficiency').text = str(efficiency)
     
     def create_static_isotropic_target_platform(self, platform_name, target_name, rcs, x, y, z):
-        """Define an isotropic radiator
+        """Add a static isotropic target to simulation
 
         Args:
-            name (string): name of target
-            rcs (string): rcs of target
+            platform_name (string): platform name
+            target_name (string): target name
+            rcs (string): RCS of target
+            x (string): x position of platform
+            y (string): y position of platform
+            z (string): Z position of platform
         """
 
         platform = ET.SubElement(self.simulation, "platform", name=platform_name)
@@ -272,6 +274,15 @@ class SimulationConfiguration:
         ET.SubElement(rcs_element, "value").text = str(rcs)
 
     def __add_waypoint(self, path, x, y, z, t):
+        """Add a waypoint in the fersxml
+
+        Args:
+            path (string): path to xml document to write
+            x (int): X position at a point in time
+            y (int): Y position at a point in time
+            z (int): Z position at a point in time
+            t (int): Time point where these positions occur
+        """
 
         point = ET.SubElement(path, "positionwaypoint")
 
@@ -312,18 +323,25 @@ class SimulationConfiguration:
         ET.SubElement(rcs_element, "value").text = str(rcs)
 
     def create_static_receiver_platform(self, platform_name, receiver_name, antenna, timing, nodirect, nopropagationloss, window_skip, window_length, prf, noise_temp, x, y, z, boresight_azimuth, boresight_elevation):
-        """Define a reciever with specified clock and antenna
+        """Create a static reciever platform
 
         Args:
-            name (string): name of the receiver
-            antenna (string): name of timing source as previously defined
-            timing (string): name of timing source as previously defined
-            nodirect (string): "true" or "false" if direct path signal is ignored
-            nopropagationloss (string): "true" or "false" causes propagation loss to be ignored
-            window_skip (string): Time to skip after start of pulse before starting receiving (seconds)
-            window_length (string): Length of the range gate (seconds)
-            prf (string): 1/window_length
-            noise_temp (string): Noise temperature of the receiver
+            platform_name (string): platform name used by fers
+            receiver_name (string): receiver name used by fers
+            # antenna (string): name of timing source as previously defined
+            # timing (string): name of timing source as previously defined
+            # nodirect (string): "true" or "false" if direct path signal is ignored
+            # nopropagationloss (string): "true" or "false" causes propagation loss to be ignored
+            # window_skip (string): Time to skip after start of pulse before starting receiving (seconds)
+            # window_length (string): Length of the range gate (seconds)
+            # prf (string): 1/window_length
+            # noise_temp (string): Noise temperature of the receiver
+            x (string): X Position of transmitter (meter)
+            y (string): Y Position of transmitter (meter)
+            z (string): Z Position of transmitter (meter)
+            t (string): T in instance (seconds) at each previously defined position
+            boresight_azimuth (string): Boresight azimuth of antenna (can be 0 if isotropic)
+            boresight_elevation (string): Boresight elevation of antenna (can be 0 if isotropic)
         """
 
         platform = ET.SubElement(self.simulation, "platform", name=platform_name)
@@ -381,21 +399,22 @@ class SimulationConfiguration:
         ET.SubElement(receiver, 'noise_temp').text = str(noise_temp)
 
     def create_static_transmitter_platform(self, platform_name, transmitter_name,pulse_name, antenna, timing, type, prf, x, y, z, boresight_azimuth, boresight_elevation):
-        """_summary_
+        """Create a static transmitter platform
 
         Args:
-            platform_name (_type_): _description_
-            receiver_name (_type_): _description_
-            antenna (_type_): _description_
-            timing (_type_): _description_
-            type (_type_): 'pulsed' or ;'continuous'
-            nopropagationloss (_type_): _description_
-            prf (_type_): _description_
-            x (_type_): _description_
-            y (_type_): _description_
-            z (_type_): _description_
-            boresight_azimuth (_type_): _description_
-            boresight_elevation (_type_): _description_
+            platform_name (string): platform name used by fers
+            transmitter_name (string): transmitter name used by fers
+            pulse_name (string): Pulse name previously defined in simulation setup and used by transmitter 
+            antenna (string): Antenna name previously defined in simulation setup and used by transmitter
+            timing (string): Timing source name previously defined in simulation setup and used by transmitter
+            type (string): "continous" or "pulsed" transmission type
+            prf (string): If pulsed define the PRF of the transmission 
+            x (string): X Position of transmitter (meter)
+            y (string): Y Position of transmitter (meter)
+            z (string): Z Position of transmitter (meter)
+            t (string): T in instance (seconds) at each previously defined position
+            boresight_azimuth (string): Boresight azimuth of antenna (can be 0 if isotropic)
+            boresight_elevation (string): Boresight elevation of antenna (can be 0 if isotropic)
         """
 
         platform = ET.SubElement(self.simulation, "platform", name=platform_name)
@@ -417,21 +436,22 @@ class SimulationConfiguration:
         ET.SubElement(receiver, 'prf').text = str(prf)
 
     def create_moving_transmitter_platform(self, platform_name, transmitter_name,pulse_name, antenna, timing, type, prf, x, y, z,t, boresight_azimuth, boresight_elevation):
-        """_summary_
+        """Create a moving transmitter platform
 
         Args:
-            platform_name (_type_): _description_
-            receiver_name (_type_): _description_
-            antenna (_type_): _description_
-            timing (_type_): _description_
-            type (_type_): 'pulsed' or ;'continuous'
-            nopropagationloss (_type_): _description_
-            prf (_type_): _description_
-            x (_type_): _description_
-            y (_type_): _description_
-            z (_type_): _description_
-            boresight_azimuth (_type_): _description_
-            boresight_elevation (_type_): _description_
+            platform_name (string): platform name used by fers
+            transmitter_name (string): transmitter name used by fers
+            pulse_name (string): Pulse name previously defined in simulation setup and used by transmitter 
+            antenna (string): Antenna name previously defined in simulation setup and used by transmitter
+            timing (string): Timing source name previously defined in simulation setup and used by transmitter
+            type (string): "continous" or "pulsed" transmission type
+            prf (string): If pulsed define the PRF of the transmission 
+            x (list[int]): X Positions of transmitter (meter)
+            y (list[int]): Y Positions of transmitter (meter)
+            z (list[int]): Z Positions of transmitter (meter)
+            t (list[int]): T in instances (seconds) at each previously defined position
+            boresight_azimuth (string): Boresight azimuth of antenna (can be 0 if isotropic)
+            boresight_elevation (string): Boresight elevation of antenna (can be 0 if isotropic)
         """
 
         platform = ET.SubElement(self.simulation, "platform", name=platform_name)
@@ -450,15 +470,38 @@ class SimulationConfiguration:
         ET.SubElement(receiver, 'prf').text = str(prf)
 
     def set_export_options(self, xml="true", csv="true", binary="false", csvbinary="false"):
+        """Set what shall be exported from simulation
+
+        Args:
+            xml (str, optional): export xml. Defaults to "true".
+            csv (str, optional): export csv. Defaults to "true".
+            binary (str, optional): export binary. Defaults to "false".
+            csvbinary (str, optional): export csv binary. Defaults to "false".
+        """
         export = ET.SubElement(self.parameters, 'export', xml=xml, csv=csv, binary=binary, csvbinary=csvbinary)
 
     def to_xml_string(self):
+        """get the simulation as an xml string
+
+        Returns:
+            string: returns simulation as an xml string
+        """
         return ET.tostring(self.simulation, encoding='utf-8')
     
     def define_dtd_file(self, name):
+        """Define DTD for xml using inpit
+
+        Args:
+            name (string): DTD definition file for xml
+        """
         self.dtd = doctype_declaration = "<!DOCTYPE simulation SYSTEM \""+name+"\" >"
 
     def write_to_file(self, file_path):
+        """Write the simulation to a fersxml file
+
+        Args:
+            file_path (string): path to which to write fersxml
+        """
         
         # Parse the XML string
         import xml.dom.minidom
