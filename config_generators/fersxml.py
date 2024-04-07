@@ -14,7 +14,7 @@ class SignalGenerator:
             phi (int, optional): Phase offset (rad). Defaults to 0.
 
         Returns:
-            nnp.array: chirp data array
+            np.array: chirp data array
         """
 
         import numpy as np
@@ -24,6 +24,76 @@ class SignalGenerator:
 
 
         return np.exp(1.j*(np.pi*bandwidth/(2*max(t_chirp))*pow((t_chirp - tau), 2) + 2*np.pi*init_freq*(t_chirp - tau) + phi))
+    
+    def write_hdf5(IQ_data, file_name):
+        """Write IQ data to an HDF5 file.
+
+        Args:
+            IQ_data (_type_): _description_
+            filename (_type_): _description_
+        """
+
+        import os as os
+
+        _, file_extension = os.path.splitext(file_name)
+        if file_extension != ".hdf5":
+            file_name = file_name + ".hdf5"
+
+        import h5py
+        import numpy as np
+
+        h5 = h5py.File(file_name, 'w')
+        h5.create_dataset('/I/value', data=np.real(IQ_data))
+        h5.create_dataset('/Q/value', data=np.imag(IQ_data))
+        h5.close()
+
+
+    def read_hdf5(filename):
+        """ Read IQ data from an HDF5 file.
+
+        Args:
+            filename (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
+
+        import os
+        import h5py
+        import numpy as np
+
+        if (os.path.exists(filename) == False):
+            print("HDF5 file not found. Please check the path.")
+            exit()
+        
+        h5 = h5py.File(filename, 'r')
+
+        dataset_list = list(h5.keys())
+
+        # read attributes
+        # attribute_list = h5[dataset_list[0]].attrs.keys()
+        # for attr in attribute_list:
+            # print(attr, h5[dataset_list[0]].attrs[attr])
+
+        scale = np.float64(h5[dataset_list[0]].attrs['fullscale'])
+        # rate = np.float64(h5[dataset_list[0]].attrs['rate'])
+        # time = np.float64(h5[dataset_list[0]].attrs['time'])
+
+        n_pulses = int(np.floor(np.size(dataset_list)/2))
+        ns_pulse = int(np.size(h5[dataset_list[0]]))
+
+        i_matrix = np.zeros((n_pulses, ns_pulse), dtype='float64')
+        q_matrix = np.zeros((n_pulses, ns_pulse), dtype='float64')
+
+        for i in range(0, n_pulses):
+            i_matrix[i, :] = np.array(h5[dataset_list[2*i + 0]], dtype='float64')
+            q_matrix[i, :] = np.array(h5[dataset_list[2*i + 1]], dtype='float64')
+
+        dataset = np.array(i_matrix + 1j*q_matrix).astype('complex128')
+
+        dataset *= scale
+        
+        return dataset
         
 class SimulationConfiguration:
     def __init__(self, name):
