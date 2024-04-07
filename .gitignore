@@ -9,3 +9,7 @@ tutorials/*.fersxml
 
 build/
 */venv
+
+*.h5
+config_generators/__pycache__/
+.vscode/

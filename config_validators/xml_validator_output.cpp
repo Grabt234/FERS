@@ -139,13 +139,41 @@ void summarizeSimTime(DOMElement *rootElement)
     std::cout << "Sim time: " << simTime << " seconds" << std::endl;
 }
 
+void printUsage(const std::string &programName)
+{
+    std::cout << "Usage: " << programName << " [options] <arg1> <arg2> ...\n"
+              << "Options:\n"
+              << "  -h, --help      Show this help message\n"
+              << "  -p, --path      Path to xml\n"
+              << "  -v, --verbose   run with verbose outputs (optional)\n";
+}
+
 int main(int argc, char *argv[])
 {
 
-    // Update file_path with command line argument
-    string file_path = argv[1];
-    // Setting mode to evironment variable from command line.
-    string mode = argv[2];
+    std::string strFilePath = "";
+    bool bRunAsVerbose = false;
+
+    // Parse command-line arguments
+    for (int i = 1; i < argc; ++i)
+    {
+        std::string arg(argv[i]);
+        if (arg == "-h" || arg == "--help")
+        {
+            printUsage(argv[0]);
+            return 0;
+        }
+        else if (arg == "-p" || arg == "--path")
+        {
+            strFilePath = argv[++i];
+            std::cout << "ferxml path set to: " << strFilePath << std::endl;
+        }
+        else if (arg == "-v" || arg == "--verbose")
+        {
+            std::cerr << "Running in verbose configuration\n";
+            bRunAsVerbose = true;
+        }
+    }
 
     try
     {
@@ -168,16 +196,14 @@ int main(int argc, char *argv[])
         parser.setLoadExternalDTD(false);
 
         // Use file_path from command line argument
-        parser.parse(file_path.c_str());
+        parser.parse(strFilePath.c_str());
 
         DOMDocument *document = parser.getDocument();
         DOMElement *rootElement = document->getDocumentElement();
 
         // Call outputElement if mode is set to verbose
-        if (std::strcmp(mode.c_str(), "verbose") == 0)
-        {
+        if (bRunAsVerbose)
             outputElement(rootElement);
-        }
 
         // Extract set element values within inputted FERSXML file or use default values
 
@@ -556,7 +582,7 @@ int main(int argc, char *argv[])
         cout << endl;
 
         // Output element counts Transmitters, Receivers, Targets only if in non-verbose mode:
-        if (std::strcmp(mode.c_str(), "non-verbose") == 0)
+        if (bRunAsVerbose)
         {
             std::cout << "Simulation Summary:" << std::endl;
             elementCount(rootElement);
