@@ -107,6 +107,7 @@ class SignalGenerator:
         """
         
         import wave
+        import numpy as np
         
         with wave.open(file_name, 'r') as wav:
             # Get the number of channels, sample width, frame rate, and number of frames
@@ -120,11 +121,11 @@ class SignalGenerator:
 
         # Convert the audio data to a numpy array
         if sample_width == 1:
-            audio_data = numpy.frombuffer(audio_data, dtype=numpy.int8)
+            audio_data = np.frombuffer(audio_data, dtype=np.int8)
         elif sample_width == 2:
-            audio_data = numpy.frombuffer(audio_data, dtype=numpy.int16)
+            audio_data = np.frombuffer(audio_data, dtype=np.int16)
         elif sample_width == 4:
-            audio_data = numpy.frombuffer(audio_data, dtype=numpy.int32)
+            audio_data = np.frombuffer(audio_data, dtype=np.int32)
         else:
             raise ValueError(f"Unsupported sample width: {sample_width}")
 
