@@ -94,6 +94,44 @@ class SignalGenerator:
         dataset *= scale
         
         return dataset
+    
+    def read_wav(file_name):
+        """
+        Reads a WAV audio file and returns the audio data and sample rate.
+
+        Args:
+            file_name (str): The path to the WAV file.
+
+        Returns:
+            tuple: A tuple containing the audio data (numpy array) and the sample rate (int).
+        """
+        
+        import wave
+        
+        with wave.open(file_name, 'r') as wav:
+            # Get the number of channels, sample width, frame rate, and number of frames
+            num_channels = wav.getnchannels()
+            sample_width = wav.getsampwidth()
+            sample_rate = wav.getframerate()
+            num_frames = wav.getnframes()
+
+            # Read the audio data
+            audio_data = wav.readframes(num_frames)
+
+        # Convert the audio data to a numpy array
+        if sample_width == 1:
+            audio_data = numpy.frombuffer(audio_data, dtype=numpy.int8)
+        elif sample_width == 2:
+            audio_data = numpy.frombuffer(audio_data, dtype=numpy.int16)
+        elif sample_width == 4:
+            audio_data = numpy.frombuffer(audio_data, dtype=numpy.int32)
+        else:
+            raise ValueError(f"Unsupported sample width: {sample_width}")
+
+        # Reshape the audio data to have the correct number of channels
+        audio_data = audio_data.reshape(-1, num_channels)
+
+        return audio_data, sample_rate
         
 class SimulationConfiguration:
     def __init__(self, name):
